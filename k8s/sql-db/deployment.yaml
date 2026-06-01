@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ubicacion-db
+  namespace: inventario-seguro
+  labels:
+    app: ubicacion-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ubicacion-db
+  template:
+    metadata:
+      labels:
+        app: ubicacion-db
+    spec:
+      containers:
+        - name: sql-server
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          ports:
+            - containerPort: 1433
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sql-secret
+                  key: SA_PASSWORD
+            - name: MSSQL_PID
+              value: "Express"
+          volumeMounts:
+            - name: sql-data
+              mountPath: /var/opt/mssql
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          readinessProbe:
+            tcpSocket:
+              port: 1433
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      volumes:
+        - name: sql-data
+          persistentVolumeClaim:
+            claimName: sql-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ubicacion-db
+  namespace: inventario-seguro
+spec:
+  selector:
+    app: ubicacion-db
+  ports:
+    - protocol: TCP
+      port: 1433
+      targetPort: 1433
+  type: ClusterIP
