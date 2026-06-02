@@ -14,17 +14,17 @@ Sistema centralizado de inventario de computadoras de laboratorios.
 
 |-----|-------------|------|
 
-| Arquitecto / Líder | Integrante 1 | main |
+| Arquitecto / Líder | Lorenzo Zamparini | main |
 
-| Base SQL Server    | Integrante 2 | feature/sql-db |
+| Base SQL Server    | Maximo Munoz | feature/sql-db |
 
-| Base MongoDB       | Integrante 3 | feature/mongo-db |
+| Base MongoDB       | Francisco Navas | feature/mongo-db |
 
-| LDAP + Red         | Integrante 4 | feature/ldap-network |
+| LDAP + Red         | Pablo Pennof | feature/ldap-network |
 
-| Aplicación Flask   | Integrante 5 | feature/flask-app |
+| Aplicación Flask   | Juan Manuel Atencio | feature/flask-app |
 
-| DevOps / K8s       | Integrante 6 | feature/devops-k8s |
+| DevOps / K8s       | Lorenzo Zamparini | feature/devops-k8s |
 
 
 
