@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Sidebar -->
+<aside id="sidebar" class="bg-brand-dark text-white w-64 flex-shrink-0 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out z-30 flex flex-col shadow-xl">
+    <!-- Sidebar Header -->
+    <div class="h-16 flex items-center px-6 bg-brand-dark/90 border-b border-gray-800">
+        <div class="w-8 h-8 bg-brand-accent rounded-md flex items-center justify-center mr-3 shadow-md">
+            <i class="fa-solid fa-desktop text-white text-sm"></i>
+        </div>
+        <div>
+            <h2 class="font-bold text-lg leading-tight tracking-tight">Inventario Seguro</h2>
+            <p class="text-xs text-gray-400">ITU - Laboratorios</p>
+        </div>
+        <button id="sidebarClose" class="md:hidden ml-auto text-gray-400 hover:text-white">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+    
+    <!-- Sidebar Menu -->
+    <div class="flex-1 overflow-y-auto py-4 custom-scrollbar">
+        {% for group in sidebar_menu %}
+            {% if group['section'] is none %}
+                <!-- Dashboard (sin encabezado) -->
+                <div class="px-4 mb-2">
+                    {% for item in group['items'] %}
+                    <a href="{{ url_for(item.href) if item.href != '#' else '#' }}" class="flex items-center px-4 py-2.5 {% if request.endpoint == item.href %}bg-brand-accent text-white{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %} rounded-lg shadow-md transition-colors group">
+                        <i class="{{ item.icon }} w-6 text-center {% if request.endpoint == item.href %}opacity-100{% else %}text-gray-400 group-hover:text-white transition-colors{% endif %}"></i>
+                        <span class="font-medium text-sm ml-2">{{ item.label }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="mt-6 px-4">
+                    <h3 class="text-xs uppercase text-gray-500 font-semibold tracking-wider mb-2 px-4">{{ group['section'] }}</h3>
+                    <ul class="space-y-1">
+                        {% for item in group['items'] %}
+                        <li>
+                            <a href="{{ url_for(item.href) if item.href != '#' else '#' }}" class="flex items-center px-4 py-2 {% if request.endpoint == item.href %}bg-white/10 text-white{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %} rounded-lg transition-colors group">
+                                <i class="{{ item.icon }} w-6 text-center {% if request.endpoint == item.href %}text-white{% else %}text-gray-400 group-hover:text-white transition-colors{% endif %}"></i>
+                                <span class="font-medium text-sm ml-2">{{ item.label }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    
+    <!-- Sidebar Footer -->
+    <div class="p-4 border-t border-gray-800">
+        <a href="{{ url_for('logout') }}" class="flex items-center px-4 py-2 text-gray-400 hover:text-red-400 rounded-lg transition-colors group">
+            <i class="fa-solid fa-arrow-right-from-bracket w-6 text-center group-hover:text-red-400 transition-colors"></i>
+            <span class="font-medium text-sm ml-2">Cerrar sesión</span>
+        </a>
+    </div>
+</aside>
+
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col overflow-hidden min-h-screen w-full">
+    <!-- Top Navbar -->
+    <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 z-10 shadow-sm flex-shrink-0 w-full">
+        <div class="flex items-center">
+            <button id="sidebarToggle" class="text-gray-500 hover:text-gray-700 md:hidden mr-4 focus:outline-none">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+            
+            <div class="hidden sm:flex relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
+                </div>
+                <input type="text" class="block w-64 md:w-96 pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent transition-colors bg-gray-50" placeholder="Buscar equipos, usuarios, ubicaciones...">
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <button class="relative p-2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors">
+                <i class="fa-regular fa-bell text-xl"></i>
+                <span class="absolute top-1 right-1 block h-4 w-4 rounded-full ring-2 ring-white bg-brand-accent text-white text-[10px] font-bold flex items-center justify-center">3</span>
+            </button>
+            
+            <div class="flex items-center border-l border-gray-200 pl-4 ml-2 cursor-pointer group">
+                <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 group-hover:bg-gray-300 transition-colors mr-2">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="hidden md:block">
+                    <p class="text-sm font-semibold text-gray-700 leading-tight">{{ current_user.nombre }}</p>
+                    <p class="text-xs text-gray-500">{{ current_user.label }}</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8 custom-scrollbar">
+        <!-- Contenedor para mensajes Flash globales dentro del layout -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="max-w-7xl mx-auto mb-4">
+                    {% for category, message in messages %}
+                        <div class="p-4 rounded-lg flex items-center shadow-sm 
+                            {% if category == 'error' %}bg-red-50 text-red-800 border border-red-200
+                            {% elif category == 'success' %}bg-green-50 text-green-800 border border-green-200
+                            {% elif category == 'warning' %}bg-yellow-50 text-yellow-800 border border-yellow-200
+                            {% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                            <i class="fa-solid {% if category == 'error' %}fa-circle-xmark{% elif category == 'success' %}fa-circle-check{% elif category == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %} mr-3 text-lg"></i>
+                            <span class="font-medium text-sm">{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="max-w-7xl mx-auto space-y-6">
+            {% block layout_content %}{% endblock %}
+            
+            <div class="mt-8 pt-4 border-t border-gray-200 text-center text-xs text-gray-500">
+                &copy; 2024 ITU - Todos los derechos reservados.
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
