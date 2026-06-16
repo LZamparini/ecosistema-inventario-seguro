@@ -24,7 +24,7 @@
         </div>
         <div class="flex-1">
             <p class="text-sm font-medium text-gray-500">Total de Equipos</p>
-            <h3 class="text-2xl font-bold text-gray-900 mt-1">128</h3>
+            <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ stats.total_equipos }}</h3>
             <p class="text-xs text-green-600 mt-2 flex items-center font-medium">
                 <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
                 Activos
@@ -41,7 +41,7 @@
         </div>
         <div class="flex-1">
             <p class="text-sm font-medium text-gray-500">Laboratorios</p>
-            <h3 class="text-2xl font-bold text-gray-900 mt-1">12</h3>
+            <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ stats.total_laboratorios }}</h3>
             <p class="text-xs text-green-600 mt-2 flex items-center font-medium">
                 <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
                 Activos
@@ -57,7 +57,7 @@
         </div>
         <div class="flex-1">
             <p class="text-sm font-medium text-gray-500">Equipos Asignados</p>
-            <h3 class="text-2xl font-bold text-gray-900 mt-1">45</h3>
+            <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ stats.total_asignados }}</h3>
             <p class="text-xs text-purple-600 mt-2 flex items-center font-medium">
                 <span class="w-1.5 h-1.5 rounded-full bg-purple-500 mr-1.5"></span>
                 Asignados
@@ -73,7 +73,7 @@
         </div>
         <div class="flex-1">
             <p class="text-sm font-medium text-gray-500">Mantenimientos</p>
-            <h3 class="text-2xl font-bold text-gray-900 mt-1">8</h3>
+            <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ stats.total_mantenimientos }}</h3>
             <p class="text-xs text-yellow-600 mt-2 flex items-center font-medium">
                 <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 mr-1.5"></span>
                 Pendientes
@@ -110,56 +110,45 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                        {% for eq in stats.equipos_recientes %}
                         <tr class="transition-colors hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500">EQ-000128</td>
-                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">PC-LAB-01-15</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden md:table-cell">Lab. 1 - Banco 15</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden lg:table-cell">Juan Pérez</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activo</span>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ eq.codigo_inventario }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ eq.id_equipo }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden md:table-cell">
+                                {% if eq.aula_nombre %}
+                                    {{ eq.aula_nombre }} - Banco {{ eq.numero_banco }}
+                                {% else %}
+                                    -
+                                {% endif %}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden xl:table-cell">12/05/2024</td>
-                        </tr>
-                        <tr class="transition-colors hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500">EQ-000127</td>
-                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">PC-LAB-01-14</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden md:table-cell">Lab. 1 - Banco 14</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden lg:table-cell">María Gómez</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activo</span>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden lg:table-cell">
+                                {% if eq.responsable_nombre %}
+                                    {{ eq.responsable_nombre }}
+                                {% else %}
+                                    <span class="text-gray-400 italic">Sin asignar</span>
+                                {% endif %}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden xl:table-cell">10/05/2024</td>
-                        </tr>
-                        <tr class="transition-colors hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500">EQ-000126</td>
-                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">PC-LAB-02-07</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden md:table-cell">Lab. 2 - Banco 7</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-400 italic hidden lg:table-cell">Sin asignar</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activo</span>
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if eq.estado == 'activo' %}bg-green-100 text-green-800
+                                    {% elif eq.estado == 'asignado' %}bg-blue-100 text-blue-800
+                                    {% elif eq.estado == 'en_reparacion' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    <span class="w-1.5 h-1.5 rounded-full 
+                                        {% if eq.estado == 'activo' %}bg-green-500
+                                        {% elif eq.estado == 'asignado' %}bg-blue-500
+                                        {% elif eq.estado == 'en_reparacion' %}bg-yellow-500
+                                        {% else %}bg-gray-500{% endif %} mr-1.5 mt-2"></span>
+                                    {{ eq.estado | replace('_', ' ') | capitalize }}
+                                </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden xl:table-cell">08/05/2024</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden xl:table-cell">{{ eq.ultimo_mant_str }}</td>
                         </tr>
-                        <tr class="transition-colors hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500">EQ-000125</td>
-                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">PC-LAB-03-03</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden md:table-cell">Lab. 3 - Banco 3</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden lg:table-cell">Carlos Ruiz</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activo</span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden xl:table-cell">05/05/2024</td>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-400 italic">No se encontraron equipos registrados.</td>
                         </tr>
-                        <tr class="transition-colors hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500">EQ-000124</td>
-                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">LAP-LAB-02-01</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden md:table-cell">Lab. 2 - Banco 1</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden lg:table-cell">Ana Torres</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activo</span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden xl:table-cell">02/05/2024</td>
-                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -240,9 +229,9 @@
             <!-- Simulated Chart -->
             <div class="flex flex-col items-center mb-6 relative">
                 <div class="w-48 h-48 rounded-full border-[20px] border-gray-100 relative shadow-inner">
-                    <div class="absolute inset-[-20px] rounded-full" style="background: conic-gradient(#1D4ED8 0% 25%, #10B981 25% 47%, #8B5CF6 47% 66%, #F59E0B 66% 82%, #9CA3AF 82% 100%); clip-path: circle(50%); -webkit-mask: radial-gradient(transparent 65%, black 65%); mask: radial-gradient(transparent 65%, black 65%);"></div>
+                    <div class="absolute inset-[-20px] rounded-full" style="background: {{ stats.conic_gradient }}; clip-path: circle(50%); -webkit-mask: radial-gradient(transparent 65%, black 65%); mask: radial-gradient(transparent 65%, black 65%);"></div>
                     <div class="absolute inset-0 flex flex-col items-center justify-center">
-                        <span class="text-2xl font-bold text-gray-800">128</span>
+                        <span class="text-2xl font-bold text-gray-800">{{ stats.total_equipos }}</span>
                         <span class="text-xs text-gray-500">Total</span>
                     </div>
                 </div>
@@ -250,41 +239,17 @@
 
             <!-- Legend -->
             <div class="space-y-3">
+                {% for item in stats.distribucion_aulas %}
                 <div class="flex items-center justify-between text-sm">
                     <div class="flex items-center text-gray-600">
-                        <span class="w-3 h-3 rounded-full bg-brand-accent mr-2"></span>
-                        Laboratorio 1
+                        <span class="w-3 h-3 rounded-full {{ item.bg_class }} mr-2"></span>
+                        {{ item.aula_nombre }}
                     </div>
-                    <span class="font-medium">32 (25%)</span>
+                    <span class="font-medium">{{ item.cantidad }} ({{ item.porcentaje }}%)</span>
                 </div>
-                <div class="flex items-center justify-between text-sm">
-                    <div class="flex items-center text-gray-600">
-                        <span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
-                        Laboratorio 2
-                    </div>
-                    <span class="font-medium">28 (22%)</span>
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                    <div class="flex items-center text-gray-600">
-                        <span class="w-3 h-3 rounded-full bg-purple-500 mr-2"></span>
-                        Laboratorio 3
-                    </div>
-                    <span class="font-medium">24 (19%)</span>
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                    <div class="flex items-center text-gray-600">
-                        <span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>
-                        Laboratorio 4
-                    </div>
-                    <span class="font-medium">20 (16%)</span>
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                    <div class="flex items-center text-gray-600">
-                        <span class="w-3 h-3 rounded-full bg-gray-400 mr-2"></span>
-                        Otros
-                    </div>
-                    <span class="font-medium">24 (18%)</span>
-                </div>
+                {% else %}
+                <p class="text-center text-gray-400 text-xs italic">Sin datos de distribución</p>
+                {% endfor %}
             </div>
         </div>
         {% endif %}
@@ -301,47 +266,23 @@
             </div>
 
             <div class="space-y-4">
+                {% for mant in stats.proximos_mantenimientos %}
                 <div class="flex items-start">
                     <div class="p-2.5 bg-yellow-50 text-yellow-600 rounded-lg mr-4 border border-yellow-100">
                         <i class="fa-regular fa-calendar text-lg"></i>
                     </div>
                     <div class="flex-1">
-                        <h4 class="font-medium text-gray-900 text-sm">PC-LAB-01-15</h4>
-                        <p class="text-xs text-gray-500 mt-0.5">Lab. 1 - Banco 15</p>
+                        <h4 class="font-medium text-gray-900 text-sm">{{ mant.id_equipo }}</h4>
+                        <p class="text-xs text-gray-500 mt-0.5">{{ mant.aula_nombre }} - Banco {{ mant.numero_banco }}</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-sm font-medium text-gray-800">20/05/2024</p>
-                        <p class="text-xs text-yellow-600 mt-0.5 font-medium">En 7 días</p>
+                        <p class="text-sm font-medium text-gray-800">{{ mant.proximo_mant }}</p>
+                        <p class="text-xs text-yellow-600 mt-0.5 font-medium">{{ mant.dias_texto }}</p>
                     </div>
                 </div>
-
-                <div class="flex items-start">
-                    <div class="p-2.5 bg-yellow-50 text-yellow-600 rounded-lg mr-4 border border-yellow-100">
-                        <i class="fa-regular fa-calendar text-lg"></i>
-                    </div>
-                    <div class="flex-1">
-                        <h4 class="font-medium text-gray-900 text-sm">PC-LAB-02-07</h4>
-                        <p class="text-xs text-gray-500 mt-0.5">Lab. 2 - Banco 7</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm font-medium text-gray-800">22/05/2024</p>
-                        <p class="text-xs text-yellow-600 mt-0.5 font-medium">En 9 días</p>
-                    </div>
-                </div>
-
-                <div class="flex items-start">
-                    <div class="p-2.5 bg-yellow-50 text-yellow-600 rounded-lg mr-4 border border-yellow-100">
-                        <i class="fa-regular fa-calendar text-lg"></i>
-                    </div>
-                    <div class="flex-1">
-                        <h4 class="font-medium text-gray-900 text-sm">PC-LAB-03-03</h4>
-                        <p class="text-xs text-gray-500 mt-0.5">Lab. 3 - Banco 3</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm font-medium text-gray-800">25/05/2024</p>
-                        <p class="text-xs text-yellow-600 mt-0.5 font-medium">En 12 días</p>
-                    </div>
-                </div>
+                {% else %}
+                <p class="text-center text-gray-400 text-sm italic py-4">No hay mantenimientos próximos registrados.</p>
+                {% endfor %}
             </div>
         </div>
         {% endif %}
