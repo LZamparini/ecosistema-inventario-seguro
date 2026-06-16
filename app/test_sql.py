@@ -1,5 +1,5 @@
 import sys
-import pytds
+import pymssql
 import config
 from dotenv import load_dotenv
 from pathlib import Path
@@ -13,14 +13,14 @@ print(f"Usuario: {config.SQL_SERVER_USER}")
 print(f"Base de datos: {config.SQL_SERVER_DATABASE}")
 
 try:
-    conn = pytds.connect(
+    conn = pymssql.connect(
         server=config.SQL_SERVER_HOST,
         port=config.SQL_SERVER_PORT,
         user=config.SQL_SERVER_USER,
         password=config.SQL_SERVER_PASSWORD,
         database=config.SQL_SERVER_DATABASE,
         autocommit=True,
-        login_timeout=5
+        timeout=5
     )
     print("CONEXION EXITOSA A SQL SERVER")
     

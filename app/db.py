@@ -1,14 +1,14 @@
 """
-db.py — Módulo para conectar a SQL Server usando python-tds (pure python).
+db.py — Módulo para conectar a SQL Server usando pymssql.
 """
 
-import pytds
+import pymssql
 import config
 
 def get_db_connection():
     """Establece una conexión al motor SQL Server según config.py"""
     try:
-        conn = pytds.connect(
+        conn = pymssql.connect(
             server=config.SQL_SERVER_HOST,
             port=config.SQL_SERVER_PORT,
             user=config.SQL_SERVER_USER,
