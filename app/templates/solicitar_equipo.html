@@ -1,0 +1,77 @@
+{% extends 'layout.html' %}
+
+{% block layout_content %}
+<div class="mb-8 flex justify-between items-center">
+    <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Solicitar Equipo</h1>
+        <p class="text-sm text-gray-500 mt-1">Complete el formulario para solicitar la asignación temporal de una computadora.</p>
+    </div>
+    <a href="{{ url_for('asignaciones') }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center">
+        <i class="fa-solid fa-arrow-left mr-2"></i> Volver a Mis Asignaciones
+    </a>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden max-w-2xl">
+    <div class="px-6 py-5 border-b border-gray-100 bg-white">
+        <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+            <i class="fa-solid fa-file-signature text-brand-accent mr-2 text-sm"></i>
+            Formulario de Solicitud
+        </h3>
+    </div>
+    
+    <div class="p-6 sm:p-8">
+        <form action="{{ url_for('solicitar_equipo') }}" method="POST" class="space-y-6">
+            
+            <div>
+                <label for="tipo" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Equipo Requerido</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-laptop text-gray-400"></i>
+                    </div>
+                    <select id="tipo" name="tipo" required class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors appearance-none bg-white">
+                        <option value="" disabled selected>Seleccione el tipo de equipo...</option>
+                        <option value="desktop">Computadora de Escritorio (Desktop)</option>
+                        <option value="laptop">Computadora Portátil (Laptop)</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-chevron-down text-gray-400 text-sm"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="fecha_desde" class="block text-sm font-medium text-gray-700 mb-1">Fecha Desde</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-regular fa-calendar text-gray-400"></i>
+                        </div>
+                        <input type="date" id="fecha_desde" name="fecha_desde" required class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="fecha_hasta" class="block text-sm font-medium text-gray-700 mb-1">Fecha Hasta</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-regular fa-calendar-check text-gray-400"></i>
+                        </div>
+                        <input type="date" id="fecha_hasta" name="fecha_hasta" required class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white">
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <label for="justificacion" class="block text-sm font-medium text-gray-700 mb-1">Justificación del Pedido</label>
+                <textarea id="justificacion" name="justificacion" rows="4" required placeholder="Explique brevemente el motivo por el cual necesita la asignación del equipo (ej. Proyecto de investigación, clases prácticas, etc.)" class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors resize-none bg-white"></textarea>
+            </div>
+            
+            <div class="pt-4 flex justify-end">
+                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-brand-accent hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center">
+                    <i class="fa-solid fa-paper-plane mr-2"></i> Enviar Solicitud
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

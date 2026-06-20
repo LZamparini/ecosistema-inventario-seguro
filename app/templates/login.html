@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="w-full h-screen flex flex-col md:flex-row">
+    <!-- Left side (Hidden on mobile) -->
+    <div class="hidden md:flex md:w-1/2 bg-brand-dark text-white flex-col justify-center items-center p-12 relative overflow-hidden bg-grid-pattern">
+        <!-- Constellation background effect can be simulated with absolute divs or an image, we use pure CSS / colors -->
+        <div class="absolute inset-0 bg-gradient-radial from-brand-blue/40 to-transparent"></div>
+        
+        <div class="relative z-10 text-center max-w-md">
+            <div class="mb-8 flex justify-center">
+                <!-- Icon -->
+                <div class="w-24 h-20 bg-brand-blue rounded-lg border-b-4 border-brand-accent flex items-center justify-center text-4xl shadow-lg relative">
+                    <i class="fa-solid fa-desktop text-white"></i>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <i class="fa-solid fa-shield-check text-green-400 absolute mt-2 ml-2 text-xl drop-shadow-md"></i>
+                    </div>
+                </div>
+            </div>
+            <h1 class="text-4xl font-bold mb-4 tracking-tight">Inventario Seguro</h1>
+            <p class="text-gray-300 text-lg mb-12 font-light">Sistema de inventario de equipos<br>de laboratorios de informática</p>
+            
+            <div class="w-12 h-1 bg-brand-accent mx-auto mb-12 rounded-full"></div>
+            
+            <div class="space-y-8 text-left">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full border border-gray-600 flex items-center justify-center mr-4 text-brand-accent mt-1">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg">Acceso seguro y controlado</h3>
+                        <p class="text-gray-400 text-sm mt-1 leading-relaxed">Autenticación centralizada con<br>Active Directory / LDAP institucional</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full border border-gray-600 flex items-center justify-center mr-4 text-brand-accent mt-1">
+                        <i class="fa-solid fa-server"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg">Datos protegidos</h3>
+                        <p class="text-gray-400 text-sm mt-1 leading-relaxed">Conexión segura a las bases de datos<br>SQL Server y MongoDB</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full border border-gray-600 flex items-center justify-center mr-4 text-brand-accent mt-1">
+                        <i class="fa-solid fa-user-gear"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg">Gestión eficiente</h3>
+                        <p class="text-gray-400 text-sm mt-1 leading-relaxed">Administración y control de todos los<br>equipos de los laboratorios</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right side -->
+    <div class="w-full md:w-1/2 bg-white flex flex-col justify-center items-center p-6 sm:p-12 relative">
+        <div class="w-full max-w-md glass-panel rounded-2xl shadow-xl p-8 sm:p-10 border border-gray-100 relative z-10">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-brand-accent text-2xl shadow-sm">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-800 tracking-tight">Iniciar sesión</h2>
+                <p class="text-gray-500 text-sm mt-2">Ingrese sus credenciales institucionales<br>para acceder al sistema</p>
+            </div>
+            
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="mb-4 space-y-2">
+                {% for category, message in messages %}
+                <div class="flex items-center p-3 rounded-lg text-sm
+                    {% if category == 'error' %}bg-red-50 text-red-700 border border-red-200
+                    {% elif category == 'success' %}bg-green-50 text-green-700 border border-green-200
+                    {% else %}bg-yellow-50 text-yellow-700 border border-yellow-200{% endif %}">
+                    <i class="fa-solid {% if category == 'error' %}fa-circle-exclamation{% elif category == 'success' %}fa-circle-check{% else %}fa-triangle-exclamation{% endif %} mr-2"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+            
+            <form action="{{ url_for('login') }}" method="POST" class="space-y-6">
+                <div>
+                    <label for="usuario" class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+                    <div class="relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-regular fa-user text-gray-400"></i>
+                        </div>
+                        <input type="text" name="usuario" id="usuario" class="focus:ring-brand-accent focus:border-brand-accent block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-3 border outline-none transition-colors" placeholder="tecnico.inventario" required>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                    <div class="relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-lock text-gray-400"></i>
+                        </div>
+                        <input type="password" name="password" id="password" class="focus:ring-brand-accent focus:border-brand-accent block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-lg py-3 border outline-none transition-colors" placeholder="Ingrese su contraseña" required>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600">
+                            <i class="fa-solid fa-eye toggle-password" data-target="password"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center">
+                        <input id="remember_me" name="remember_me" type="checkbox" class="h-4 w-4 text-brand-accent focus:ring-brand-accent border-gray-300 rounded cursor-pointer">
+                        <label for="remember_me" class="ml-2 block text-sm text-gray-600 cursor-pointer">
+                            Recordar mi usuario
+                        </label>
+                    </div>
+                    <div class="text-sm">
+                        <a href="#" class="font-medium text-brand-accent hover:text-blue-500 transition-colors">¿Olvidó su contraseña?</a>
+                    </div>
+                </div>
+                
+                <div>
+                    <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-medium text-white bg-brand-accent hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-accent transition-all duration-200 transform hover:-translate-y-0.5">
+                        <i class="fa-solid fa-arrow-right-to-bracket mr-2 mt-1"></i> Iniciar sesión
+                    </button>
+                </div>
+            </form>
+            
+
+        </div>
+        
+        <div class="absolute bottom-6 flex flex-col items-center">
+            <p class="text-xs text-gray-500 flex items-center mb-2">
+                <i class="fa-solid fa-shield-check text-gray-400 mr-1"></i> Conexión segura y encriptada
+            </p>
+            <p class="text-xs text-gray-400">© 2024 ITU - Todos los derechos reservados.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
