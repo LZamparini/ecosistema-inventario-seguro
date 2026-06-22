@@ -1,7 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from auth import authenticate, get_current_user, login_required, role_required, inject_auth_context
 import config
-from db import test_db_connection, get_db_connection
+from db import (
+    test_db_connection, get_db_connection,
+    test_mongo_connection, get_all_hardware, get_hardware_by_id,
+    insert_hardware, update_hardware, delete_hardware
+)
 import datetime
 
 app = Flask(__name__)
@@ -263,12 +267,152 @@ def asignaciones():
     return render_template('asignaciones.html')
 
 
-# --- Stubs para enlaces del sidebar ---
+# ──────────────────────────────────────────────
+# CRUD Componentes (MongoDB)
+# ──────────────────────────────────────────────
+
 @app.route('/componentes')
 @login_required
 @role_required('componentes')
 def componentes():
-    return render_template('stub.html', title='Componentes', message='Gestión de componentes en MongoDB (En desarrollo).')
+    """Lista todos los equipos (hardware) de MongoDB con filtro opcional."""
+    filtro = request.args.get('q', '').strip()
+    equipos_hw = get_all_hardware(filtro if filtro else None)
+    
+    # Convertir ObjectId a string para evitar errores en template
+    for eq in equipos_hw:
+        if '_id' in eq:
+            eq['_id'] = str(eq['_id'])
+    
+    return render_template('componentes.html', equipos=equipos_hw, filtro=filtro)
+
+
+@app.route('/componentes/nuevo', methods=['GET', 'POST'])
+@login_required
+@role_required('componentes')
+def componente_nuevo():
+    """Formulario para agregar un nuevo equipo de hardware."""
+    if request.method == 'POST':
+        data = _parse_hardware_form(request.form)
+        if not data.get('id_equipo'):
+            flash('El ID del equipo es obligatorio.', 'error')
+            return render_template('componente_form.html', equipo=data, modo='nuevo')
+        
+        if insert_hardware(data):
+            flash(f'Equipo "{data["id_equipo"]}" creado exitosamente.', 'success')
+            return redirect(url_for('componentes'))
+        else:
+            flash('Error al crear el equipo. Es posible que el ID ya exista.', 'error')
+            return render_template('componente_form.html', equipo=data, modo='nuevo')
+    
+    return render_template('componente_form.html', equipo=None, modo='nuevo')
+
+
+@app.route('/componentes/<id_equipo>')
+@login_required
+@role_required('componentes')
+def componente_detalle(id_equipo):
+    """Vista de detalle de un equipo con todos sus componentes."""
+    equipo = get_hardware_by_id(id_equipo)
+    if not equipo:
+        flash('Equipo no encontrado.', 'error')
+        return redirect(url_for('componentes'))
+    
+    if '_id' in equipo:
+        equipo['_id'] = str(equipo['_id'])
+    
+    return render_template('componente_detalle.html', equipo=equipo)
+
+
+@app.route('/componentes/<id_equipo>/editar', methods=['GET', 'POST'])
+@login_required
+@role_required('componentes')
+def componente_editar(id_equipo):
+    """Formulario para editar un equipo de hardware existente."""
+    if request.method == 'POST':
+        data = _parse_hardware_form(request.form)
+        
+        if update_hardware(id_equipo, data):
+            flash(f'Equipo "{id_equipo}" actualizado exitosamente.', 'success')
+            return redirect(url_for('componente_detalle', id_equipo=id_equipo))
+        else:
+            flash('Error al actualizar el equipo.', 'error')
+            return render_template('componente_form.html', equipo=data, modo='editar', id_equipo=id_equipo)
+    
+    equipo = get_hardware_by_id(id_equipo)
+    if not equipo:
+        flash('Equipo no encontrado.', 'error')
+        return redirect(url_for('componentes'))
+    
+    if '_id' in equipo:
+        equipo['_id'] = str(equipo['_id'])
+    
+    return render_template('componente_form.html', equipo=equipo, modo='editar', id_equipo=id_equipo)
+
+
+@app.route('/componentes/<id_equipo>/eliminar', methods=['POST'])
+@login_required
+@role_required('componentes')
+def componente_eliminar(id_equipo):
+    """Elimina un equipo de hardware de MongoDB."""
+    if delete_hardware(id_equipo):
+        flash(f'Equipo "{id_equipo}" eliminado exitosamente.', 'success')
+    else:
+        flash('Error al eliminar el equipo.', 'error')
+    return redirect(url_for('componentes'))
+
+
+def _parse_hardware_form(form):
+    """Parsea los datos del formulario HTML a un diccionario compatible con MongoDB."""
+    data = {
+        'id_equipo': form.get('id_equipo', '').strip(),
+        'fabricante': form.get('fabricante', '').strip(),
+        'modelo': form.get('modelo', '').strip(),
+        'tipo': form.get('tipo', 'desktop').strip(),
+        'cpu': {
+            'marca': form.get('cpu_marca', '').strip(),
+            'modelo': form.get('cpu_modelo', '').strip(),
+            'nucleos': int(form.get('cpu_nucleos', 0) or 0),
+            'frecuencia_ghz': float(form.get('cpu_frecuencia', 0) or 0),
+        },
+        'ram': {
+            'cantidad_gb': int(form.get('ram_cantidad', 0) or 0),
+            'tipo': form.get('ram_tipo', '').strip(),
+            'frecuencia_mhz': int(form.get('ram_frecuencia', 0) or 0),
+        },
+        'discos': [],
+        'sistema_operativo': {
+            'nombre': form.get('so_nombre', '').strip(),
+            'version': form.get('so_version', '').strip(),
+        },
+        'perifericos': {
+            'monitor': form.get('periferico_monitor', '').strip(),
+            'teclado': form.get('periferico_teclado', '').strip(),
+            'mouse': form.get('periferico_mouse', '').strip(),
+        },
+        'fecha_registro': datetime.datetime.utcnow(),
+    }
+    
+    # Parsear discos dinámicos
+    i = 0
+    while True:
+        disco_tipo = form.get(f'disco_{i}_tipo')
+        if disco_tipo is None:
+            break
+        disco = {
+            'tipo': disco_tipo.strip(),
+            'interfaz': form.get(f'disco_{i}_interfaz', '').strip(),
+            'capacidad_gb': int(form.get(f'disco_{i}_capacidad', 0) or 0),
+            'marca': form.get(f'disco_{i}_marca', '').strip(),
+        }
+        if disco['tipo']:  # Solo agregar si tiene tipo
+            data['discos'].append(disco)
+        i += 1
+    
+    return data
+
+
+# --- Stubs para enlaces del sidebar ---
 
 @app.route('/mantenimiento')
 @login_required
@@ -309,10 +453,13 @@ def configuracion():
 @app.route('/health')
 def health():
     db_ok = test_db_connection()
-    status = 200 if db_ok else 503
+    mongo_ok = test_mongo_connection()
+    all_ok = db_ok and mongo_ok
+    status = 200 if all_ok else 503
     return {
-        "status": "ok" if db_ok else "error",
+        "status": "ok" if all_ok else "degraded",
         "sql_server": "connected" if db_ok else "disconnected",
+        "mongodb": "connected" if mongo_ok else "disconnected",
         "auth_mode": config.AUTH_MODE
     }, status
 

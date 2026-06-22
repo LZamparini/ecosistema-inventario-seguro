@@ -62,6 +62,15 @@ SQL_SERVER_PASSWORD = os.environ.get('SQL_SERVER_PASSWORD', '')
 SQL_SERVER_DATABASE = os.environ.get('SQL_SERVER_DATABASE', 'ubicacion_db')
 
 # ──────────────────────────────────────────────
+# Configuración MongoDB
+# ──────────────────────────────────────────────
+MONGO_HOST = os.environ.get('MONGO_HOST', '127.0.0.1')
+MONGO_PORT = int(os.environ.get('MONGO_PORT', 27017))
+MONGO_DATABASE = os.environ.get('MONGO_DATABASE', 'inventario')
+MONGO_USER = os.environ.get('MONGO_USER', 'root')
+MONGO_PASSWORD = os.environ.get('MONGO_PASSWORD', '')
+
+# ──────────────────────────────────────────────
 # Flask
 # ──────────────────────────────────────────────
 SECRET_KEY = os.environ.get('SECRET_KEY', 'clave-secreta-cambiar-en-produccion')
