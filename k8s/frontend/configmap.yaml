@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pfsense-config
+  namespace: inventario-seguro
+data:
+  PFSENSE_WAN_IP: "192.168.1.21"
+  LDAP_PORT: "389"
+  SQL_SERVER_PORT: "1433"
+  AD_DOMAIN: "itu.local"
+  AD_BASE_DN: "DC=itu,DC=local"
+  SQL_SERVER_DATABASE: "ubicacion_db"
+  AD_DEFAULT_ROLE: "alumno"
+  AUTH_MODE: "ldap"
+  MONGO_HOST: "inventario-db"
+  MONGO_PORT: "27017"
+  MONGO_DATABASE: "inventario"
