@@ -146,4 +146,26 @@ echo "========================================================"
 echo ""
 echo "Iniciando reenvío de puertos nativo... (Ctrl+C para detener)"
 
+echo ""
+echo "=> Abriendo consola de MongoDB en una nueva terminal..."
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+  # Para Linux Mint / Ubuntu
+  if command -v gnome-terminal &> /dev/null; then
+    gnome-terminal -- bash -c "kubectl exec -it deployment/inventario-db -n $NAMESPACE -- mongo -u admin -p 'Itu2026*' --authenticationDatabase admin; exec bash" &
+  elif command -v x-terminal-emulator &> /dev/null; then
+    x-terminal-emulator -e "bash -c 'kubectl exec -it deployment/inventario-db -n $NAMESPACE -- mongo -u admin -p \"Itu2026*\" --authenticationDatabase admin; exec bash'" &
+  else
+    echo "   Por favor, abrí otra pestaña de terminal y ejecutá:"
+    echo "   kubectl exec -it deployment/inventario-db -n $NAMESPACE -- mongo -u admin -p 'Itu2026*' --authenticationDatabase admin"
+  fi
+elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+  # Para Windows Git Bash
+  start bash -c "kubectl exec -it deployment/inventario-db -n $NAMESPACE -- mongo -u admin -p 'Itu2026*' --authenticationDatabase admin; exec bash"
+else
+  # Fallback
+  echo "   (No se pudo detectar el gestor de ventanas. Abrí otra pestaña y ejecutá:)"
+  echo "   kubectl exec -it deployment/inventario-db -n $NAMESPACE -- mongo -u admin -p 'Itu2026*' --authenticationDatabase admin"
+fi
+echo ""
+
 kubectl port-forward service/inventario-web 5000:5000 --address 0.0.0.0 -n $NAMESPACE
