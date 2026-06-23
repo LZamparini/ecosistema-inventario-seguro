@@ -2,11 +2,12 @@
 
 echo "================================================"
 echo "  EGI - Ecosistema de Inventario Seguro"
-echo "  Script de arranque completo"
+echo "  Script de arranque completo y exposición"
 echo "================================================"
 
 NAMESPACE="inventario-seguro"
-REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+# Forzamos que la ruta base sea donde está el script realmente
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # ─── 1. Levantar Minikube ────────────────────────────────────────────────────
 echo ""
@@ -18,14 +19,6 @@ if [ $? -ne 0 ]; then
 fi
 echo "Minikube listo."
 
-# ─── Limpiar deployments anteriores ─────────────────────────────────────────
-echo ""
-echo "[0/7] Limpiando despliegues anteriores..."
-kubectl delete deployments --all -n inventario-seguro > /dev/null 2>&1
-kubectl delete jobs --all -n inventario-seguro > /dev/null 2>&1
-sleep 3
-echo "Limpieza lista."
-
 # ─── 2. Namespace ────────────────────────────────────────────────────────────
 echo ""
 echo "[2/7] Verificando namespace $NAMESPACE..."
@@ -36,25 +29,38 @@ if [ $? -ne 0 ]; then
 fi
 echo "Namespace listo."
 
+# ─── 0. Limpiar despliegues anteriores (CORREGIDO) ───────────────────────────
+echo ""
+echo "[0/7] Limpiando despliegues anteriores y Pods residuales..."
+# Quitamos el flag --quiet que rompía todo
+kubectl delete deployments --all -n $NAMESPACE --ignore-not-found
+kubectl delete jobs --all -n $NAMESPACE --ignore-not-found
+
+echo "Destruyendo Pods residuales de forma forzada..."
+kubectl delete pods --all -n $NAMESPACE --force --grace-period=0 > /dev/null 2>&1
+sleep 3
+echo "Limpieza profunda completada."
+
 # ─── 3. Secrets y ConfigMap ──────────────────────────────────────────────────
 echo ""
 echo "[3/7] Aplicando Secrets y ConfigMap..."
-kubectl apply -f "$REPO_DIR/k8s/frontend/secret.yaml"
-kubectl apply -f "$REPO_DIR/k8s/frontend/configmap.yaml"
+kubectl apply -f "$REPO_DIR/k8s/frontend/secret.yaml" -n $NAMESPACE
+kubectl apply -f "$REPO_DIR/k8s/frontend/configmap.yaml" -n $NAMESPACE
 echo "Secrets y ConfigMap aplicados."
 
 # ─── 4. MongoDB ──────────────────────────────────────────────────────────────
 echo ""
 echo "[4/7] Desplegando MongoDB..."
-kubectl apply -f "$REPO_DIR/k8s/mongo-db/"
+kubectl apply -f "$REPO_DIR/k8s/mongo-db/" -n $NAMESPACE
 echo "Esperando que MongoDB esté listo..."
+# Aseguramos el namespace en el wait
 kubectl wait --for=condition=Ready pod -l app=inventario-db -n $NAMESPACE --timeout=120s
 if [ $? -eq 0 ]; then
   echo "MongoDB listo."
   echo "Ejecutando seed de MongoDB..."
   kubectl delete job mongo-seed -n $NAMESPACE > /dev/null 2>&1
-  kubectl apply -f "$REPO_DIR/k8s/mongo-db/seed-job.yaml"
-  echo "Seed iniciado (corre en segundo plano)."
+  kubectl apply -f "$REPO_DIR/k8s/mongo-db/seed-job.yaml" -n $NAMESPACE
+  echo "Seed iniciado."
 else
   echo "ADVERTENCIA: MongoDB tardó más de lo esperado. Continuando..."
 fi
@@ -71,44 +77,35 @@ echo "ConfigMap actualizado con IP $PFSENSE_IP."
 # ─── 6. Flask App ────────────────────────────────────────────────────────────
 echo ""
 echo "[6/7] Desplegando aplicación Flask..."
-kubectl apply -f "$REPO_DIR/k8s/frontend/deployment.yaml"
+kubectl apply -f "$REPO_DIR/k8s/frontend/deployment.yaml" -n $NAMESPACE
 echo "Esperando que Flask esté listo..."
-sleep 5
-OLD_POD=$(kubectl get pods -n $NAMESPACE -l app=inventario-web \
-  --sort-by=.metadata.creationTimestamp \
-  -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
-if [ -n "$OLD_POD" ]; then
-  kubectl delete pod $OLD_POD -n $NAMESPACE > /dev/null 2>&1
-fi
+
 kubectl wait --for=condition=Ready pod -l app=inventario-web -n $NAMESPACE --timeout=120s
 if [ $? -eq 0 ]; then
   echo "Flask listo."
 else
-  echo "ADVERTENCIA: Flask tardó más de lo esperado. Verificá los logs con:"
-  echo "  kubectl logs -n $NAMESPACE deploy/inventario-web"
+  echo "ADVERTENCIA: Flask tardó más de lo esperado."
 fi
 
 # ─── 7. Exponer la app en la red ─────────────────────────────────────────────
 echo ""
 echo "[7/7] Exponiendo la app en la red local..."
-MY_IP=$(ip addr show enp0s8 2>/dev/null | grep "inet " | awk '{print $2}' | cut -d/ -f1)
+MY_IP=$(ip addr show enp0s3 2>/dev/null | grep "inet " | awk '{print $2}' | cut -d/ -f1)
 if [ -z "$MY_IP" ]; then
   MY_IP=$(hostname -I | awk '{print $1}')
 fi
 
 echo ""
-echo "================================================"
-echo "  TODO LISTO"
+echo "========================================================"
+echo "  TODO LISTO PARA LA DEFENSAS DE LA EGI"
 echo ""
-echo "  Pods corriendo:"
+echo "  Pods corriendo actualmente:"
 kubectl get pods -n $NAMESPACE
 echo ""
-echo "  Abrí en cualquier PC de la red:"
-echo "  http://$MY_IP:8080"
+echo "  Abrí en cualquier PC / Celular de la misma red:"
+echo "  URL: http://$MY_IP:5000/componentes"
+echo "========================================================"
 echo ""
-echo "  Usuario de prueba: tecnico.inventario"
-echo "  Contraseña:        Itu2026*"
-echo "================================================"
-echo ""
-echo "Iniciando reenvío de puertos... (Ctrl+C para detener)"
-socat TCP-LISTEN:8080,bind=$MY_IP,fork TCP:192.168.49.2:30080
+echo "Iniciando reenvío de puertos nativo... (Ctrl+C para detener)"
+
+kubectl port-forward service/inventario-web 5000:5000 --address 0.0.0.0 -n $NAMESPACE
