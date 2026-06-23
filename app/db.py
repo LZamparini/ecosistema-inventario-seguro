@@ -402,3 +402,87 @@ def insert_mantenimiento_sql(data):
         return False
     finally:
         conn.close()
+
+# ──────────────────────────────────────────────
+# Solicitudes (MongoDB) & Asignaciones (SQL Server)
+# ──────────────────────────────────────────────
+
+def insert_solicitud_mongo(data):
+    db = get_mongo_db()
+    if db is None:
+        return False
+    try:
+        db.solicitudes.insert_one(data)
+        return True
+    except Exception as e:
+        print(f"[MONGO ERROR] Error insertando solicitud: {e}")
+        return False
+
+def get_pending_solicitudes():
+    db = get_mongo_db()
+    if db is None:
+        return []
+    try:
+        return list(db.solicitudes.find({'estado': 'pendiente'}).sort('fecha_solicitud', -1))
+    except Exception as e:
+        print(f"[MONGO ERROR] Error obteniendo solicitudes: {e}")
+        return []
+
+def get_solicitud_by_id(id_solicitud):
+    db = get_mongo_db()
+    if db is None:
+        return None
+    try:
+        return db.solicitudes.find_one({'_id': ObjectId(id_solicitud)})
+    except Exception as e:
+        return None
+
+def update_solicitud_status(id_solicitud, estado):
+    db = get_mongo_db()
+    if db is None:
+        return False
+    try:
+        res = db.solicitudes.update_one({'_id': ObjectId(id_solicitud)}, {'$set': {'estado': estado}})
+        return res.modified_count > 0
+    except Exception as e:
+        return False
+
+def insert_asignacion_sql(data):
+    conn = get_db_connection()
+    if not conn:
+        return False
+    try:
+        with conn.cursor() as cursor:
+            query = """
+            INSERT INTO asignaciones (id_equipo, usuario_uid, rol_assigned, fecha_desde, fecha_hasta, activa)
+            VALUES (%s, %s, %s, %s, %s, 1)
+            """
+            cursor.execute(query, (
+                data['id_equipo'],
+                data['usuario_uid'],
+                data['rol_assigned'],
+                data['fecha_desde'],
+                data['fecha_hasta']
+            ))
+            
+            query_eq = "UPDATE equipos SET estado = 'asignado' WHERE id_equipo = %s"
+            cursor.execute(query_eq, (data['id_equipo'],))
+            return True
+    except Exception as e:
+        print(f"[SQL ERROR] Error inserting asignacion: {e}")
+        return False
+    finally:
+        conn.close()
+
+def get_equipos_activos():
+    conn = get_db_connection()
+    if not conn:
+        return []
+    try:
+        with conn.cursor(as_dict=True) as cursor:
+            cursor.execute("SELECT id_equipo, codigo_inventario, numero_banco FROM equipos WHERE estado = 'activo' ORDER BY id_equipo")
+            return cursor.fetchall()
+    except Exception as e:
+        return []
+    finally:
+        conn.close()

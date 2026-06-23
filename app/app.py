@@ -7,7 +7,9 @@ from db import (
     insert_hardware, update_hardware, delete_hardware,
     get_equipo_sql_details, get_active_assignments,
     get_aulas, get_responsables, insert_equipo_sql,
-    get_all_mantenimientos, insert_mantenimiento_sql
+    get_all_mantenimientos, insert_mantenimiento_sql,
+    insert_solicitud_mongo, get_pending_solicitudes, get_solicitud_by_id,
+    update_solicitud_status, insert_asignacion_sql, get_equipos_activos
 )
 import datetime
 
@@ -303,7 +305,100 @@ def asignaciones():
     rol = user['rol'] if user else None
     
     active_list = get_active_assignments(usuario_uid=username, rol=rol)
-    return render_template('asignaciones.html', asignaciones=active_list)
+    
+    solicitudes = []
+    equipos_disponibles = []
+    if rol == 'admin':
+        solicitudes = get_pending_solicitudes()
+        for s in solicitudes:
+            if '_id' in s:
+                s['_id'] = str(s['_id'])
+        equipos_disponibles = get_equipos_activos()
+        
+    return render_template(
+        'asignaciones.html', 
+        asignaciones=active_list,
+        solicitudes=solicitudes,
+        equipos_disponibles=equipos_disponibles,
+        tab=request.args.get('tab', 'activas')
+    )
+
+@app.route('/solicitar-equipo', methods=['GET', 'POST'])
+@login_required
+@role_required('solicitar_equipo')
+def solicitar_equipo():
+    """Permite a alumnos y docentes solicitar un equipo."""
+    user = get_current_user()
+    if request.method == 'POST':
+        motivo = request.form.get('motivo', '').strip()
+        fecha_necesidad = request.form.get('fecha_necesidad')
+        
+        if not motivo or not fecha_necesidad:
+            flash('Por favor complete todos los campos.', 'error')
+            return render_template('solicitud_form.html')
+            
+        data = {
+            'usuario': user['username'],
+            'nombre_completo': user['nombre'],
+            'rol': user['rol'],
+            'fecha_solicitud': datetime.datetime.utcnow(),
+            'motivo': motivo,
+            'fecha_necesidad': fecha_necesidad,
+            'estado': 'pendiente'
+        }
+        
+        if insert_solicitud_mongo(data):
+            flash('Su solicitud ha sido enviada con éxito y está pendiente de aprobación.', 'success')
+            return redirect(url_for('asignaciones'))
+        else:
+            flash('Error al enviar la solicitud.', 'error')
+            
+    return render_template('solicitud_form.html')
+
+
+@app.route('/asignaciones/aprobar/<id_solicitud>', methods=['POST'])
+@login_required
+@role_required('aprobar_solicitudes')
+def aprobar_solicitud(id_solicitud):
+    """Admin aprueba una solicitud y asigna un equipo."""
+    id_equipo = request.form.get('id_equipo')
+    fecha_hasta = request.form.get('fecha_hasta')
+    
+    if not id_equipo or not fecha_hasta:
+        flash('Debe seleccionar un equipo y una fecha de finalización.', 'error')
+        return redirect(url_for('asignaciones', tab='pendientes'))
+        
+    solicitud = get_solicitud_by_id(id_solicitud)
+    if not solicitud:
+        flash('Solicitud no encontrada.', 'error')
+        return redirect(url_for('asignaciones', tab='pendientes'))
+        
+    asignacion_data = {
+        'id_equipo': id_equipo,
+        'usuario_uid': solicitud['usuario'],
+        'rol_assigned': solicitud['rol'],
+        'fecha_desde': datetime.date.today().strftime('%Y-%m-%d'),
+        'fecha_hasta': fecha_hasta
+    }
+    
+    if insert_asignacion_sql(asignacion_data):
+        update_solicitud_status(id_solicitud, 'aprobada')
+        flash(f'Solicitud aprobada. Equipo {id_equipo} asignado a {solicitud["usuario"]}.', 'success')
+    else:
+        flash('Error al crear la asignación en SQL Server.', 'error')
+        
+    return redirect(url_for('asignaciones', tab='pendientes'))
+
+@app.route('/asignaciones/rechazar/<id_solicitud>', methods=['POST'])
+@login_required
+@role_required('aprobar_solicitudes')
+def rechazar_solicitud(id_solicitud):
+    """Admin rechaza una solicitud."""
+    if update_solicitud_status(id_solicitud, 'rechazada'):
+        flash('Solicitud rechazada.', 'success')
+    else:
+        flash('Error al rechazar la solicitud.', 'error')
+    return redirect(url_for('asignaciones', tab='pendientes'))
 
 
 # ──────────────────────────────────────────────

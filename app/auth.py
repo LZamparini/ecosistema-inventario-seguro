@@ -51,7 +51,7 @@ ROLE_PERMISSIONS = {
         'equipos', 'equipo_detalle', 'equipo_nuevo', 'equipo_editar', 'equipo_eliminar',
         'componentes',
         'mantenimiento',
-        'asignaciones',
+        'asignaciones', 'aprobar_solicitudes',
     ],
     'tecnico': [
         'dashboard',
@@ -63,12 +63,12 @@ ROLE_PERMISSIONS = {
     'docente': [
         'dashboard',
         'equipos', 'equipo_detalle',
-        'asignaciones',
+        'asignaciones', 'solicitar_equipo',
     ],
     'alumno': [
         'dashboard',
         'equipo_detalle',
-        'asignaciones',
+        'asignaciones', 'solicitar_equipo',
     ],
 }
 
