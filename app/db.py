@@ -480,7 +480,7 @@ def get_equipos_activos():
         return []
     try:
         with conn.cursor(as_dict=True) as cursor:
-            cursor.execute("SELECT id_equipo, codigo_inventario, numero_banco FROM equipos WHERE estado = 'activo' ORDER BY id_equipo")
+            cursor.execute("SELECT id_equipo, codigo_inventario, numero_banco FROM equipos WHERE LOWER(estado) = 'activo' ORDER BY id_equipo")
             return cursor.fetchall()
     except Exception as e:
         return []

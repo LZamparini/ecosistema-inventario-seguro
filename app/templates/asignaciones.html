@@ -114,33 +114,32 @@
                     <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ sol.fecha_necesidad }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                         
-                        <!-- Formulario para aprobar -->
-                        <form method="POST" action="{{ url_for('aprobar_solicitud', id_solicitud=sol._id) }}" class="inline-block relative group">
-                            <!-- Popover para asignar equipo -->
-                            <div class="hidden group-hover:block absolute bottom-full right-0 mb-2 w-64 p-3 bg-white rounded-lg shadow-xl border border-gray-200 z-50 text-left">
-                                <p class="text-xs font-medium text-gray-700 mb-2">Asignar Equipo</p>
-                                <select name="id_equipo" required class="w-full text-xs border border-gray-300 rounded p-1 mb-2">
-                                    <option value="">-- Seleccione Equipo --</option>
+                        <div class="flex flex-col space-y-2 w-48 mx-auto">
+                            <!-- Formulario para aprobar -->
+                            <form method="POST" action="{{ url_for('aprobar_solicitud', id_solicitud=sol._id) }}" class="flex flex-col space-y-2 bg-gray-50 p-2 rounded border border-gray-200">
+                                <p class="text-xs font-semibold text-gray-700 text-left">Aprobar y Asignar</p>
+                                <select name="id_equipo" required class="w-full text-xs border border-gray-300 rounded p-1">
+                                    <option value="">-- Equipo --</option>
+                                    {% if not equipos_disponibles %}
+                                    <option value="" disabled>No hay equipos activos</option>
+                                    {% endif %}
                                     {% for eq in equipos_disponibles %}
                                     <option value="{{ eq.id_equipo }}">{{ eq.id_equipo }} ({{ eq.codigo_inventario }})</option>
                                     {% endfor %}
                                 </select>
-                                <p class="text-xs font-medium text-gray-700 mb-2">Fecha Hasta</p>
-                                <input type="date" name="fecha_hasta" required class="w-full text-xs border border-gray-300 rounded p-1 mb-2">
-                                <button type="submit" class="w-full py-1 mt-2 bg-green-500 text-white text-xs font-bold rounded hover:bg-green-600 transition-colors">Confirmar Asignación</button>
-                            </div>
-                            
-                            <button type="button" class="text-green-600 hover:text-green-900 mx-1 p-1 bg-green-50 rounded" title="Aprobar y Asignar">
-                                <i class="fa-solid fa-check"></i> Aprobar
-                            </button>
-                        </form>
+                                <input type="date" name="fecha_hasta" required class="w-full text-xs border border-gray-300 rounded p-1" title="Fecha Hasta">
+                                <button type="submit" class="w-full py-1 bg-green-500 text-white text-xs font-bold rounded hover:bg-green-600 transition-colors">
+                                    <i class="fa-solid fa-check mr-1"></i> Confirmar
+                                </button>
+                            </form>
 
-                        <!-- Formulario para rechazar -->
-                        <form method="POST" action="{{ url_for('rechazar_solicitud', id_solicitud=sol._id) }}" class="inline-block ml-2">
-                            <button type="submit" class="text-red-600 hover:text-red-900 mx-1 p-1 bg-red-50 rounded" title="Rechazar" onclick="return confirm('¿Está seguro de rechazar esta solicitud?');">
-                                <i class="fa-solid fa-xmark"></i> Rechazar
-                            </button>
-                        </form>
+                            <!-- Formulario para rechazar -->
+                            <form method="POST" action="{{ url_for('rechazar_solicitud', id_solicitud=sol._id) }}">
+                                <button type="submit" class="w-full py-1 bg-white text-red-600 border border-red-200 text-xs font-bold rounded hover:bg-red-50 transition-colors" onclick="return confirm('¿Está seguro de rechazar esta solicitud?');">
+                                    <i class="fa-solid fa-xmark mr-1"></i> Rechazar
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% else %}
