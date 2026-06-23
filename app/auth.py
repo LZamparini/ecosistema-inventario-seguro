@@ -107,31 +107,14 @@ SIDEBAR_MENU = [
     {
         'section': 'Inventario',
         'items': [
-            {'label': 'Equipos',              'icon': 'fa-solid fa-desktop',   'href': 'equipos', 'permission': 'equipos',       'active_id': 'equipos'},
-            {'label': 'Componentes (MongoDB)', 'icon': 'fa-solid fa-microchip','href': 'componentes', 'permission': 'componentes',   'active_id': 'componentes'},
-            {'label': 'Mantenimiento',         'icon': 'fa-solid fa-wrench',   'href': 'mantenimiento', 'permission': 'mantenimiento', 'active_id': 'mantenimiento'},
+            {'label': 'Componentes (MongoDB)', 'icon': 'fa-solid fa-microchip', 'href': 'componentes', 'permission': 'componentes', 'active_id': 'componentes'},
         ]
     },
     {
         'section': 'Ubicación y Asignación',
         'items': [
-            {'label': 'Aulas / Laboratorios', 'icon': 'fa-solid fa-building',         'href': 'aulas', 'permission': 'aulas',         'active_id': 'aulas'},
             {'label': 'Asignaciones',          'icon': 'fa-solid fa-users-viewfinder', 'href': 'asignaciones', 'permission': 'asignaciones',  'active_id': 'asignaciones'},
             {'label': 'Solicitar Equipo',      'icon': 'fa-solid fa-hand-holding-hand', 'href': 'solicitar_equipo', 'permission': 'solicitar_equipo', 'active_id': 'solicitar_equipo'},
-            {'label': 'Responsables',          'icon': 'fa-regular fa-user',           'href': 'responsables', 'permission': 'responsables',  'active_id': 'responsables'},
-        ]
-    },
-    {
-        'section': 'Reportes',
-        'items': [
-            {'label': 'Reportes', 'icon': 'fa-solid fa-chart-column', 'href': 'reportes', 'permission': 'reportes', 'active_id': 'reportes'},
-        ]
-    },
-    {
-        'section': 'Administración',
-        'items': [
-            {'label': 'Usuarios',      'icon': 'fa-solid fa-users', 'href': 'usuarios', 'permission': 'usuarios',      'active_id': 'usuarios'},
-            {'label': 'Configuración', 'icon': 'fa-solid fa-gear',  'href': 'configuracion', 'permission': 'configuracion', 'active_id': 'configuracion'},
         ]
     },
 ]

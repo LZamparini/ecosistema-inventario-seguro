@@ -67,7 +67,7 @@
                 {% for eq in equipos %}
                 <tr class="transition-colors hover:bg-blue-50/40 group">
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <a href="{{ url_for('componente_detalle', id_equipo=eq.id_equipo) }}" class="font-semibold text-brand-accent hover:text-blue-700 transition-colors">
+                        <a href="{{ url_for('equipo_detalle', id=eq.id_equipo) }}" class="font-semibold text-brand-accent hover:text-blue-700 transition-colors">
                             {{ eq.id_equipo }}
                         </a>
                     </td>
@@ -103,7 +103,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right">
                         <div class="flex items-center justify-end space-x-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                            <a href="{{ url_for('componente_detalle', id_equipo=eq.id_equipo) }}" 
+                            <a href="{{ url_for('equipo_detalle', id=eq.id_equipo) }}" 
                                class="p-2 text-gray-400 hover:text-brand-accent hover:bg-blue-50 rounded-lg transition-all" title="Ver detalle">
                                 <i class="fa-solid fa-eye text-sm"></i>
                             </a>

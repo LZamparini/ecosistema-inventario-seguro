@@ -4,7 +4,8 @@ import config
 from db import (
     test_db_connection, get_db_connection,
     test_mongo_connection, get_all_hardware, get_hardware_by_id,
-    insert_hardware, update_hardware, delete_hardware
+    insert_hardware, update_hardware, delete_hardware,
+    get_equipo_sql_details, get_active_assignments
 )
 import datetime
 
@@ -218,7 +219,26 @@ def equipos():
 @login_required
 @role_required('equipo_detalle')
 def equipo_detalle(id):
-    return f"Vista de detalle del equipo {id} (En desarrollo)"
+    """Vista de detalle unificada (consulta cruzada políglota SQL Server + MongoDB)"""
+    # 1. Consultar SQL Server (Ubicación, Responsable, Estado)
+    sql_details = get_equipo_sql_details(id)
+    
+    # 2. Consultar MongoDB (Componentes de hardware)
+    mongo_details = get_hardware_by_id(id)
+    
+    if not sql_details and not mongo_details:
+        flash(f'El equipo "{id}" no se encuentra registrado en el sistema.', 'error')
+        return redirect(url_for('equipos'))
+    
+    if mongo_details and '_id' in mongo_details:
+        mongo_details['_id'] = str(mongo_details['_id'])
+        
+    return render_template(
+        'equipo_detalle.html', 
+        id_equipo=id,
+        sql_details=sql_details, 
+        mongo_details=mongo_details
+    )
 
 
 @app.route('/equipo/nuevo', methods=['GET', 'POST'])
@@ -262,9 +282,13 @@ def solicitar_equipo():
 @login_required
 @role_required('asignaciones')
 def asignaciones():
-    # En el futuro se obtendrán desde SQL Server, filtrando por current_user['rol']
-    # y current_user['username'] si es necesario.
-    return render_template('asignaciones.html')
+    """Muestra la lista de asignaciones activas reales desde SQL Server."""
+    user = get_current_user()
+    username = user['username'] if user else None
+    rol = user['rol'] if user else None
+    
+    active_list = get_active_assignments(usuario_uid=username, rol=rol)
+    return render_template('asignaciones.html', asignaciones=active_list)
 
 
 # ──────────────────────────────────────────────
@@ -312,16 +336,8 @@ def componente_nuevo():
 @login_required
 @role_required('componentes')
 def componente_detalle(id_equipo):
-    """Vista de detalle de un equipo con todos sus componentes."""
-    equipo = get_hardware_by_id(id_equipo)
-    if not equipo:
-        flash('Equipo no encontrado.', 'error')
-        return redirect(url_for('componentes'))
-    
-    if '_id' in equipo:
-        equipo['_id'] = str(equipo['_id'])
-    
-    return render_template('componente_detalle.html', equipo=equipo)
+    """Redirige al detalle unificado del equipo."""
+    return redirect(url_for('equipo_detalle', id=id_equipo))
 
 
 @app.route('/componentes/<id_equipo>/editar', methods=['GET', 'POST'])

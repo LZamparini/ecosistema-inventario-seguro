@@ -43,6 +43,92 @@ def test_db_connection():
     return False
 
 
+def get_equipo_sql_details(id_equipo):
+    """Obtiene detalles de ubicación y responsable desde SQL Server para un id_equipo."""
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        with conn.cursor(as_dict=True) as cursor:
+            query = """
+            SELECT 
+                e.id_equipo,
+                e.codigo_inventario,
+                e.numero_banco,
+                e.estado,
+                e.fecha_ingreso,
+                a.nombre AS aula_nombre,
+                a.tipo AS aula_tipo,
+                a.piso AS aula_piso,
+                a.edificio AS aula_edificio,
+                r.nombre AS responsable_nombre,
+                r.apellido AS responsable_apellido,
+                r.email AS responsable_email
+            FROM equipos e
+            LEFT JOIN aulas a ON e.id_aula = a.id_aula
+            LEFT JOIN responsables r ON e.id_responsable = r.id_responsable
+            WHERE e.id_equipo = %s
+            """
+            cursor.execute(query, (id_equipo,))
+            return cursor.fetchone()
+    except Exception as e:
+        print(f"[SQL ERROR] Error fetching equipo SQL details for {id_equipo}: {e}")
+        return None
+    finally:
+        conn.close()
+
+
+def get_active_assignments(usuario_uid=None, rol=None):
+    """Obtiene asignaciones activas desde SQL Server.
+    Filtra por usuario_uid si el rol es docente o alumno."""
+    conn = get_db_connection()
+    if not conn:
+        return []
+    try:
+        with conn.cursor(as_dict=True) as cursor:
+            query = """
+            SELECT 
+                a.id_asignacion,
+                a.id_equipo,
+                a.usuario_uid,
+                a.rol_assigned,
+                a.fecha_desde,
+                a.fecha_hasta,
+                a.activa,
+                e.codigo_inventario,
+                au.nombre AS aula_nombre,
+                e.numero_banco
+            FROM asignaciones a
+            JOIN equipos e ON a.id_equipo = e.id_equipo
+            LEFT JOIN aulas au ON e.id_aula = au.id_aula
+            WHERE a.activa = 1
+            """
+            params = []
+            if usuario_uid and rol not in ['admin', 'tecnico']:
+                query += " AND a.usuario_uid = %s"
+                params.append(usuario_uid)
+            
+            query += " ORDER BY a.fecha_desde DESC"
+            cursor.execute(query, tuple(params))
+            rows = cursor.fetchall()
+            
+            for r in rows:
+                if r['fecha_desde']:
+                    r['fecha_desde_str'] = r['fecha_desde'].strftime('%d/%m/%Y')
+                else:
+                    r['fecha_desde_str'] = '-'
+                if r['fecha_hasta']:
+                    r['fecha_hasta_str'] = r['fecha_hasta'].strftime('%d/%m/%Y')
+                else:
+                    r['fecha_hasta_str'] = '-'
+            return rows
+    except Exception as e:
+        print(f"[SQL ERROR] Error fetching active assignments: {e}")
+        return []
+    finally:
+        conn.close()
+
+
 # ──────────────────────────────────────────────
 # MongoDB — Conexión
 # ──────────────────────────────────────────────

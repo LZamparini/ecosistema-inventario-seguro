@@ -60,38 +60,33 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200 text-sm">
-                <tr class="transition-colors">
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">EQ-000128</td>
-                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">Juan Pérez</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">Docente</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">01/05/2024</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">31/07/2024</td>
+                {% for asg in asignaciones %}
+                <tr class="transition-colors hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                        <a href="{{ url_for('equipo_detalle', id=asg.id_equipo) }}" class="text-brand-accent hover:text-blue-700 font-semibold transition-colors">
+                            {{ asg.id_equipo }}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-900">{{ asg.usuario_uid }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ asg.rol_assigned | capitalize }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ asg.fecha_desde_str }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ asg.fecha_hasta_str }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activa</span>
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activa
+                        </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <a href="#" class="text-brand-accent hover:text-blue-900 mr-3" title="Ver detalle"><i class="fa-solid fa-eye"></i></a>
-                        {% if has_permission('usuarios') %}
-                        <a href="#" class="text-red-500 hover:text-red-700" title="Revocar asignación"><i class="fa-solid fa-xmark"></i></a>
-                        {% endif %}
+                        <a href="{{ url_for('equipo_detalle', id=asg.id_equipo) }}" class="text-brand-accent hover:text-blue-900 mr-3" title="Ver detalle">
+                            <i class="fa-solid fa-eye text-sm"></i>
+                        </a>
                     </td>
                 </tr>
-                <tr class="transition-colors">
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">EQ-000127</td>
-                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">María Gómez</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">Alumno</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">15/04/2024</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">15/07/2024</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activa</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <a href="#" class="text-brand-accent hover:text-blue-900 mr-3" title="Ver detalle"><i class="fa-solid fa-eye"></i></a>
-                        {% if has_permission('usuarios') %}
-                        <a href="#" class="text-red-500 hover:text-red-700" title="Revocar asignación"><i class="fa-solid fa-xmark"></i></a>
-                        {% endif %}
-                    </td>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="px-6 py-8 text-center text-gray-400 italic">No hay asignaciones activas registradas.</td>
                 </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
