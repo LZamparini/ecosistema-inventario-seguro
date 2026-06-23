@@ -26,6 +26,7 @@ spec:
         - |
           mongo --host inventario-db --username "$MONGO_ROOT_USER" --password "$MONGO_ROOT_PASSWORD" --authenticationDatabase admin inventario --eval '
           db.hardware.drop();
+          db.solicitudes.drop();
           db.hardware.insertMany([
             { id_equipo: "PC-LAB1-001", fabricante: "Dell", modelo: "OptiPlex 3080", tipo: "desktop", cpu: { marca: "Intel", modelo: "Core i5-10500", nucleos: 6, frecuencia_ghz: 3.1 }, ram: { cantidad_gb: 16, tipo: "DDR4", frecuencia_mhz: 2666 }, discos: [{ tipo: "SSD", interfaz: "SATA", capacidad_gb: 480, marca: "Kingston" }], sistema_operativo: { nombre: "Windows 11 Pro", version: "22H2" }, perifericos: { monitor: "Dell 24 E2422H", teclado: "Dell KB216", mouse: "Dell MS116" }, fecha_registro: new Date("2023-03-01") },
             { id_equipo: "PC-LAB1-002", fabricante: "HP", modelo: "EliteDesk 800 G6", tipo: "desktop", cpu: { marca: "Intel", modelo: "Core i7-10700", nucleos: 8, frecuencia_ghz: 2.9 }, ram: { cantidad_gb: 32, tipo: "DDR4", frecuencia_mhz: 2933 }, discos: [{ tipo: "SSD", interfaz: "NVMe", capacidad_gb: 512, marca: "Samsung" }], sistema_operativo: { nombre: "Windows 11 Pro", version: "22H2" }, perifericos: { monitor: "HP 24mh 24", teclado: "HP 125", mouse: "HP 125" }, fecha_registro: new Date("2023-03-01") },
