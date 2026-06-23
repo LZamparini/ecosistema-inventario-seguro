@@ -73,7 +73,42 @@ read -p ">>> Ingresá la IP de pfSense: " PFSENSE_IP
 kubectl patch configmap pfsense-config -n $NAMESPACE \
   --type merge -p "{\"data\":{\"PFSENSE_WAN_IP\":\"$PFSENSE_IP\"}}"
 echo "ConfigMap actualizado con IP $PFSENSE_IP."
+# ─── NUEVO PASO INYECTADO: SQL SERVER SEED ──────────────────────────────────
+echo ""
+echo "[5b/7] Inicializando base de datos en SQL Server externo..."
+# Limpiamos ejecuciones anteriores del Job para evitar colisiones
+kubectl delete job mssql-seed -n $NAMESPACE --ignore-not-found > /dev/null 2>&1
+kubectl delete configmap sql-script-config -n $NAMESPACE --ignore-not-found > /dev/null 2>&1
 
+# Aplicamos el manifiesto que acabás de crear con las tablas de la facultad
+kubectl apply -f "$REPO_DIR/k8s/sql-server/sql-seed-job.yaml" -n $NAMESPACE
+
+echo "Esperando que el Pod de SQL Server Seed termine la migración..."
+kubectl wait --for=condition=Complete job/mssql-seed -n $NAMESPACE --timeout=60s
+if [ $? -eq 0 ]; then
+  echo "Tablas relacionales y datos semilla inyectados correctamente en la otra Notebook."
+else
+  echo "ADVERTENCIA: El Job de SQL Server falló o tardó demasiado."
+  echo "Asegurate de que la otra Notebook tenga el puerto 1433 abierto en el firewall y TCP/IP activo."
+fi
+# ─── NUEVO PASO INYECTADO: SQL SERVER SEED ──────────────────────────────────
+echo ""
+echo "[5b/7] Inicializando base de datos en SQL Server externo..."
+# Limpiamos ejecuciones anteriores del Job para que no colisione
+kubectl delete job mssql-seed -n $NAMESPACE --ignore-not-found > /dev/null 2>&1
+kubectl delete configmap sql-script-config -n $NAMESPACE --ignore-not-found > /dev/null 2>&1
+
+# Aplicamos el nuevo manifiesto que contiene las tablas de la facultad
+kubectl apply -f "$REPO_DIR/k8s/sql-server/sql-seed-job.yaml" -n $NAMESPACE
+
+echo "Esperando que el Pod de SQL Server Seed termine la migración..."
+kubectl wait --for=condition=Complete job/mssql-seed -n $NAMESPACE --timeout=60s
+if [ $? -eq 0 ]; then
+  echo "Tablas relacionales y datos semilla inyectados correctamente en la otra Notebook."
+else
+  echo "ADVERTENCIA: El Job de SQL Server falló o tardó demasiado."
+  echo "Asegurate de que la otra Notebook tenga el puerto 1433 abierto en el firewall y TCP/IP activo."
+fi
 # ─── 6. Flask App ────────────────────────────────────────────────────────────
 echo ""
 echo "[6/7] Desplegando aplicación Flask..."
