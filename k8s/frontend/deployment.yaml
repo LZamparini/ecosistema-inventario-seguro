@@ -1,0 +1,145 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventario-web
+  namespace: inventario-seguro
+  labels:
+    app: inventario-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inventario-web
+  template:
+    metadata:
+      labels:
+        app: inventario-web
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: flask-app
+          image: inventario-web:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          env:
+            - name: LDAP_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: pfsense-config
+                  key: PFSENSE_WAN_IP
+            - name: LDAP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: pfsense-config
+                  key: LDAP_PORT
+            - name: LDAP_USE_SSL
+              value: "false"
+            - name: AD_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: pfsense-config
+                  key: AD_DOMAIN
+            - name: AD_BASE_DN
+              valueFrom:
+                configMapKeyRef:
+                  name: pfsense-config
+                  key: AD_BASE_DN
+            - name: AD_DEFAULT_ROLE
+              valueFrom:
+                configMapKeyRef:
+                  name: pfsense-config
+                  key: AD_DEFAULT_ROLE
+            - name: AUTH_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: pfsense-config
+                  key: AUTH_MODE
+            - name: LDAP_BIND_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: LDAP_BIND_USER
+            - name: LDAP_BIND_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: LDAP_BIND_PASSWORD
+            - name: SQL_SERVER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: pfsense-config
+                  key: PFSENSE_WAN_IP
+            - name: SQL_SERVER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: pfsense-config
+                  key: SQL_SERVER_PORT
+            - name: SQL_SERVER_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: pfsense-config
+                  key: SQL_SERVER_DATABASE
+            - name: SQL_SERVER_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: SQL_SERVER_USER
+            - name: SQL_SERVER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: SQL_SERVER_PASSWORD
+            - name: MONGO_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: pfsense-config
+                  key: MONGO_HOST
+            - name: MONGO_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: pfsense-config
+                  key: MONGO_PORT
+            - name: MONGO_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: pfsense-config
+                  key: MONGO_DATABASE
+            - name: MONGO_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: MONGO_USER
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: MONGO_PASSWORD
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: SECRET_KEY
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "150m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventario-web
+  namespace: inventario-seguro
+spec:
+  selector:
+    app: inventario-web
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+      nodePort: 30080
+  type: NodePort

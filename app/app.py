@@ -1,7 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from auth import authenticate, get_current_user, login_required, role_required, inject_auth_context
 import config
-from db import test_db_connection, get_db_connection
+from db import (
+    test_db_connection, get_db_connection,
+    test_mongo_connection, get_all_hardware, get_hardware_by_id,
+    insert_hardware, update_hardware, delete_hardware,
+    get_equipo_sql_details, get_active_assignments,
+    get_aulas, get_responsables, insert_equipo_sql,
+    get_all_mantenimientos, insert_mantenimiento_sql,
+    insert_solicitud_mongo, get_pending_solicitudes, get_solicitud_by_id,
+    update_solicitud_status, insert_asignacion_sql, get_equipos_activos
+)
 import datetime
 
 app = Flask(__name__)
@@ -214,67 +223,390 @@ def equipos():
 @login_required
 @role_required('equipo_detalle')
 def equipo_detalle(id):
-    return f"Vista de detalle del equipo {id} (En desarrollo)"
+    """Vista de detalle unificada (consulta cruzada políglota SQL Server + MongoDB)"""
+    # 1. Consultar SQL Server (Ubicación, Responsable, Estado)
+    sql_details = get_equipo_sql_details(id)
+    
+    # 2. Consultar MongoDB (Componentes de hardware)
+    mongo_details = get_hardware_by_id(id)
+    
+    if not sql_details and not mongo_details:
+        flash(f'El equipo "{id}" no se encuentra registrado en el sistema.', 'error')
+        return redirect(url_for('equipos'))
+    
+    if mongo_details and '_id' in mongo_details:
+        mongo_details['_id'] = str(mongo_details['_id'])
+        
+    return render_template(
+        'equipo_detalle.html', 
+        id_equipo=id,
+        sql_details=sql_details, 
+        mongo_details=mongo_details
+    )
 
 
 @app.route('/equipo/nuevo', methods=['GET', 'POST'])
 @login_required
 @role_required('equipo_nuevo')
 def equipo_nuevo():
-    return "Vista para crear un nuevo equipo (En desarrollo)"
+    """Formulario unificado para agregar un nuevo equipo a SQL Server y MongoDB."""
+    aulas_list = get_aulas()
+    responsables_list = get_responsables()
 
-
-@app.route('/equipo/<id>/editar', methods=['GET', 'POST'])
-@login_required
-@role_required('equipo_editar')
-def equipo_editar(id):
-    return f"Vista para editar el equipo {id} (En desarrollo)"
-
-
-@app.route('/equipo/<id>/eliminar', methods=['POST'])
-@login_required
-@role_required('equipo_eliminar')
-def equipo_eliminar(id):
-    return f"Vista/Ruta para eliminar el equipo {id} (En desarrollo)"
-
-
-@app.route('/solicitar-equipo', methods=['GET', 'POST'])
-@login_required
-@role_required('solicitar_equipo')
-def solicitar_equipo():
     if request.method == 'POST':
-        tipo = request.form.get('tipo')
-        justificacion = request.form.get('justificacion')
-        fecha_desde = request.form.get('fecha_desde')
-        fecha_hasta = request.form.get('fecha_hasta')
-        # Por ahora solo simulamos que la solicitud fue enviada exitosamente
-        flash('Solicitud de equipo enviada exitosamente. Estado: Pendiente.', 'success')
-        return redirect(url_for('asignaciones'))
-    
-    return render_template('solicitar_equipo.html')
+        # 1. Parsear datos para SQL Server
+        id_equipo = request.form.get('id_equipo', '').strip()
+        codigo_inventario = request.form.get('codigo_inventario', '').strip()
+        id_aula = request.form.get('id_aula')
+        numero_banco = request.form.get('numero_banco', '').strip()
+        estado = request.form.get('estado', 'activo').strip()
+        id_responsable = request.form.get('id_responsable')
+        
+        if not id_equipo or not codigo_inventario or not id_aula or not numero_banco:
+            flash('Los campos ID Equipo, Código Inventario, Aula y Banco son obligatorios.', 'error')
+            return render_template('equipo_form.html', aulas=aulas_list, responsables=responsables_list, form_data=request.form)
+            
+        sql_data = {
+            'id_equipo': id_equipo,
+            'codigo_inventario': codigo_inventario,
+            'id_aula': id_aula,
+            'numero_banco': numero_banco,
+            'estado': estado,
+            'id_responsable': id_responsable if id_responsable else None,
+            'fecha_ingreso': datetime.date.today()
+        }
+
+        # 2. Parsear datos para MongoDB
+        mongo_data = _parse_hardware_form(request.form)
+        
+        # 3. Guardar en SQL Server
+        if not insert_equipo_sql(sql_data):
+            flash('Error al guardar el equipo en SQL Server. Es posible que el ID o Código de Inventario ya existan.', 'error')
+            return render_template('equipo_form.html', aulas=aulas_list, responsables=responsables_list, form_data=request.form)
+
+        # 4. Guardar en MongoDB
+        if not insert_hardware(mongo_data):
+            flash('Equipo guardado en SQL Server, pero falló el registro de componentes en MongoDB.', 'warning')
+            return redirect(url_for('equipos'))
+
+        flash(f'Equipo "{id_equipo}" creado exitosamente en ambas bases de datos.', 'success')
+        return redirect(url_for('equipos'))
+
+    return render_template('equipo_form.html', aulas=aulas_list, responsables=responsables_list, form_data=None)
 
 
 @app.route('/asignaciones')
 @login_required
 @role_required('asignaciones')
 def asignaciones():
-    # En el futuro se obtendrán desde SQL Server, filtrando por current_user['rol']
-    # y current_user['username'] si es necesario.
-    return render_template('asignaciones.html')
+    """Muestra la lista de asignaciones activas reales desde SQL Server."""
+    user = get_current_user()
+    username = user['username'] if user else None
+    rol = user['rol'] if user else None
+    
+    active_list = get_active_assignments(usuario_uid=username, rol=rol)
+    
+    solicitudes = []
+    equipos_disponibles = []
+    if rol == 'admin':
+        solicitudes = get_pending_solicitudes()
+        for s in solicitudes:
+            if '_id' in s:
+                s['_id'] = str(s['_id'])
+        equipos_disponibles = get_equipos_activos()
+        
+    return render_template(
+        'asignaciones.html', 
+        asignaciones=active_list,
+        solicitudes=solicitudes,
+        equipos_disponibles=equipos_disponibles,
+        tab=request.args.get('tab', 'activas')
+    )
+
+@app.route('/solicitar-equipo', methods=['GET', 'POST'])
+@login_required
+@role_required('solicitar_equipo')
+def solicitar_equipo():
+    """Permite a alumnos y docentes solicitar un equipo."""
+    user = get_current_user()
+    if request.method == 'POST':
+        motivo = request.form.get('motivo', '').strip()
+        fecha_necesidad = request.form.get('fecha_necesidad')
+        
+        if not motivo or not fecha_necesidad:
+            flash('Por favor complete todos los campos.', 'error')
+            return render_template('solicitud_form.html')
+            
+        data = {
+            'usuario': user['username'],
+            'nombre_completo': user['nombre'],
+            'rol': user['rol'],
+            'fecha_solicitud': datetime.datetime.utcnow(),
+            'motivo': motivo,
+            'fecha_necesidad': fecha_necesidad,
+            'estado': 'pendiente'
+        }
+        
+        if insert_solicitud_mongo(data):
+            flash('Su solicitud ha sido enviada con éxito y está pendiente de aprobación.', 'success')
+            return redirect(url_for('asignaciones'))
+        else:
+            flash('Error al enviar la solicitud.', 'error')
+            
+    return render_template('solicitud_form.html')
 
 
-# --- Stubs para enlaces del sidebar ---
+@app.route('/asignaciones/aprobar/<id_solicitud>', methods=['POST'])
+@login_required
+@role_required('aprobar_solicitudes')
+def aprobar_solicitud(id_solicitud):
+    """Admin aprueba una solicitud y asigna un equipo."""
+    id_equipo = request.form.get('id_equipo')
+    fecha_hasta = request.form.get('fecha_hasta')
+    
+    if not id_equipo or not fecha_hasta:
+        flash('Debe seleccionar un equipo y una fecha de finalización.', 'error')
+        return redirect(url_for('asignaciones', tab='pendientes'))
+        
+    solicitud = get_solicitud_by_id(id_solicitud)
+    if not solicitud:
+        flash('Solicitud no encontrada.', 'error')
+        return redirect(url_for('asignaciones', tab='pendientes'))
+        
+    asignacion_data = {
+        'id_equipo': id_equipo,
+        'usuario_uid': solicitud['usuario'],
+        'rol_assigned': solicitud['rol'],
+        'fecha_desde': datetime.date.today().strftime('%Y-%m-%d'),
+        'fecha_hasta': fecha_hasta
+    }
+    
+    if insert_asignacion_sql(asignacion_data):
+        update_solicitud_status(id_solicitud, 'aprobada')
+        flash(f'Solicitud aprobada. Equipo {id_equipo} asignado a {solicitud["usuario"]}.', 'success')
+    else:
+        flash('Error al crear la asignación en SQL Server.', 'error')
+        
+    return redirect(url_for('asignaciones', tab='pendientes'))
+
+@app.route('/asignaciones/rechazar/<id_solicitud>', methods=['POST'])
+@login_required
+@role_required('aprobar_solicitudes')
+def rechazar_solicitud(id_solicitud):
+    """Admin rechaza una solicitud."""
+    if update_solicitud_status(id_solicitud, 'rechazada'):
+        flash('Solicitud rechazada.', 'success')
+    else:
+        flash('Error al rechazar la solicitud.', 'error')
+    return redirect(url_for('asignaciones', tab='pendientes'))
+
+
+# ──────────────────────────────────────────────
+# CRUD Componentes (MongoDB)
+# ──────────────────────────────────────────────
+
 @app.route('/componentes')
 @login_required
 @role_required('componentes')
 def componentes():
-    return render_template('stub.html', title='Componentes', message='Gestión de componentes en MongoDB (En desarrollo).')
+    """Lista todos los equipos (hardware) de MongoDB con filtro opcional."""
+    filtro = request.args.get('q', '').strip()
+    equipos_hw = get_all_hardware(filtro if filtro else None)
+    
+    # Convertir ObjectId a string para evitar errores en template
+    for eq in equipos_hw:
+        if '_id' in eq:
+            eq['_id'] = str(eq['_id'])
+    
+    return render_template('componentes.html', equipos=equipos_hw, filtro=filtro)
+
+
+@app.route('/componentes/nuevo', methods=['GET', 'POST'])
+@login_required
+@role_required('componentes')
+def componente_nuevo():
+    """Formulario para agregar un nuevo equipo de hardware."""
+    if request.method == 'POST':
+        data = _parse_hardware_form(request.form)
+        if not data.get('id_equipo'):
+            flash('El ID del equipo es obligatorio.', 'error')
+            return render_template('componente_form.html', equipo=data, modo='nuevo')
+        
+        if insert_hardware(data):
+            flash(f'Equipo "{data["id_equipo"]}" creado exitosamente.', 'success')
+            return redirect(url_for('componentes'))
+        else:
+            flash('Error al crear el equipo. Es posible que el ID ya exista.', 'error')
+            return render_template('componente_form.html', equipo=data, modo='nuevo')
+    
+    return render_template('componente_form.html', equipo=None, modo='nuevo')
+
+
+@app.route('/componentes/<id_equipo>')
+@login_required
+@role_required('componentes')
+def componente_detalle(id_equipo):
+    """Redirige al detalle unificado del equipo."""
+    return redirect(url_for('equipo_detalle', id=id_equipo))
+
+
+@app.route('/componentes/<id_equipo>/editar', methods=['GET', 'POST'])
+@login_required
+@role_required('componentes')
+def componente_editar(id_equipo):
+    """Formulario para editar un equipo de hardware existente."""
+    if request.method == 'POST':
+        data = _parse_hardware_form(request.form)
+        
+        if update_hardware(id_equipo, data):
+            flash(f'Equipo "{id_equipo}" actualizado exitosamente.', 'success')
+            return redirect(url_for('componente_detalle', id_equipo=id_equipo))
+        else:
+            flash('Error al actualizar el equipo.', 'error')
+            return render_template('componente_form.html', equipo=data, modo='editar', id_equipo=id_equipo)
+    
+    equipo = get_hardware_by_id(id_equipo)
+    if not equipo:
+        flash('Equipo no encontrado.', 'error')
+        return redirect(url_for('componentes'))
+    
+    if '_id' in equipo:
+        equipo['_id'] = str(equipo['_id'])
+    
+    return render_template('componente_form.html', equipo=equipo, modo='editar', id_equipo=id_equipo)
+
+
+@app.route('/componentes/<id_equipo>/eliminar', methods=['POST'])
+@login_required
+@role_required('componentes')
+def componente_eliminar(id_equipo):
+    """Elimina un equipo de hardware de MongoDB."""
+    if delete_hardware(id_equipo):
+        flash(f'Equipo "{id_equipo}" eliminado exitosamente.', 'success')
+    else:
+        flash('Error al eliminar el equipo.', 'error')
+    return redirect(url_for('componentes'))
+
+
+def _parse_hardware_form(form):
+    """Parsea los datos del formulario HTML a un diccionario compatible con MongoDB."""
+    data = {
+        'id_equipo': form.get('id_equipo', '').strip(),
+        'fabricante': form.get('fabricante', '').strip(),
+        'modelo': form.get('modelo', '').strip(),
+        'tipo': form.get('tipo', 'desktop').strip(),
+        'cpu': {
+            'marca': form.get('cpu_marca', '').strip(),
+            'modelo': form.get('cpu_modelo', '').strip(),
+            'nucleos': int(form.get('cpu_nucleos', 0) or 0),
+            'frecuencia_ghz': float(form.get('cpu_frecuencia', 0) or 0),
+        },
+        'ram': {
+            'cantidad_gb': int(form.get('ram_cantidad', 0) or 0),
+            'tipo': form.get('ram_tipo', '').strip(),
+            'frecuencia_mhz': int(form.get('ram_frecuencia', 0) or 0),
+        },
+        'discos': [],
+        'sistema_operativo': {
+            'nombre': form.get('so_nombre', '').strip(),
+            'version': form.get('so_version', '').strip(),
+        },
+        'perifericos': {
+            'monitor': form.get('periferico_monitor', '').strip(),
+            'teclado': form.get('periferico_teclado', '').strip(),
+            'mouse': form.get('periferico_mouse', '').strip(),
+        },
+        'fecha_registro': datetime.datetime.utcnow(),
+    }
+    
+    # Parsear discos dinámicos
+    i = 0
+    while True:
+        disco_tipo = form.get(f'disco_{i}_tipo')
+        if disco_tipo is None:
+            break
+        disco = {
+            'tipo': disco_tipo.strip(),
+            'interfaz': form.get(f'disco_{i}_interfaz', '').strip(),
+            'capacidad_gb': int(form.get(f'disco_{i}_capacidad', 0) or 0),
+            'marca': form.get(f'disco_{i}_marca', '').strip(),
+        }
+        if disco['tipo']:  # Solo agregar si tiene tipo
+            data['discos'].append(disco)
+        i += 1
+    
+    return data
+
+
+# --- Stubs para enlaces del sidebar ---
 
 @app.route('/mantenimiento')
 @login_required
 @role_required('mantenimiento')
 def mantenimiento():
-    return render_template('stub.html', title='Mantenimiento', message='Programación y registro de mantenimientos (En desarrollo).')
+    """Lista todos los mantenimientos desde SQL Server."""
+    mants = get_all_mantenimientos()
+    return render_template('mantenimiento_list.html', mantenimientos=mants)
+
+
+@app.route('/mantenimiento/nuevo', methods=['GET', 'POST'])
+@login_required
+@role_required('mantenimiento')
+def mantenimiento_nuevo():
+    """Formulario para registrar un nuevo mantenimiento en SQL Server."""
+    # Obtener lista de equipos de SQL Server para el select
+    conn = get_db_connection()
+    equipos_list = []
+    if conn:
+        try:
+            with conn.cursor(as_dict=True) as cursor:
+                cursor.execute("SELECT id_equipo, codigo_inventario FROM equipos ORDER BY id_equipo")
+                equipos_list = cursor.fetchall()
+        except Exception as e:
+            print(f"[SQL ERROR] Error fetching equipos for maintenance select: {e}")
+        finally:
+            conn.close()
+
+    today_str = datetime.date.today().strftime('%Y-%m-%d')
+
+    if request.method == 'POST':
+        id_equipo = request.form.get('id_equipo')
+        tipo = request.form.get('tipo')
+        descripcion = request.form.get('descripcion', '').strip()
+        tecnico = request.form.get('tecnico', '').strip()
+        fecha_mant_raw = request.form.get('fecha_mant')
+        proximo_mant_raw = request.form.get('proximo_mant')
+
+        if not id_equipo or not tipo or not fecha_mant_raw or not tecnico:
+            flash('Los campos Equipo, Tipo, Técnico y Fecha son obligatorios.', 'error')
+            return render_template('mantenimiento_form.html', equipos=equipos_list, form_data=request.form, today_str=today_str)
+
+        try:
+            fecha_mant = datetime.datetime.strptime(fecha_mant_raw, '%Y-%m-%d').date()
+            proximo_mant = datetime.datetime.strptime(proximo_mant_raw, '%Y-%m-%d').date() if proximo_mant_raw else None
+        except ValueError:
+            flash('Formato de fecha inválido. Use AAAA-MM-DD.', 'error')
+            return render_template('mantenimiento_form.html', equipos=equipos_list, form_data=request.form, today_str=today_str)
+
+        mant_data = {
+            'id_equipo': id_equipo,
+            'fecha_mant': fecha_mant,
+            'tipo': tipo,
+            'descripcion': descripcion,
+            'tecnico': tecnico,
+            'proximo_mant': proximo_mant
+        }
+
+        if insert_mantenimiento_sql(mant_data):
+            flash(f'Mantenimiento registrado con éxito. El equipo "{id_equipo}" ha sido marcado "En reparación".', 'success')
+            return redirect(url_for('mantenimiento'))
+        else:
+            flash('Error al registrar el mantenimiento en SQL Server.', 'error')
+            return render_template('mantenimiento_form.html', equipos=equipos_list, form_data=request.form, today_str=today_str)
+
+    # Si se pasa un id_equipo por query string, pre-seleccionarlo
+    preselected_id = request.args.get('id_equipo')
+    return render_template('mantenimiento_form.html', equipos=equipos_list, preselected_id=preselected_id, form_data=None, today_str=today_str)
 
 @app.route('/aulas')
 @login_required
@@ -309,10 +641,13 @@ def configuracion():
 @app.route('/health')
 def health():
     db_ok = test_db_connection()
-    status = 200 if db_ok else 503
+    mongo_ok = test_mongo_connection()
+    all_ok = db_ok and mongo_ok
+    status = 200 if all_ok else 503
     return {
-        "status": "ok" if db_ok else "error",
+        "status": "ok" if all_ok else "degraded",
         "sql_server": "connected" if db_ok else "disconnected",
+        "mongodb": "connected" if mongo_ok else "disconnected",
         "auth_mode": config.AUTH_MODE
     }, status
 

@@ -1,0 +1,390 @@
+{% extends 'layout.html' %}
+
+{% block layout_content %}
+<!-- Breadcrumb -->
+<div class="mb-6">
+    <a href="{{ url_for('equipos') }}" class="text-sm font-medium text-brand-accent hover:text-blue-700 transition-colors flex items-center">
+        <i class="fa-solid fa-arrow-left mr-2"></i> Volver al Dashboard
+    </a>
+</div>
+
+<!-- Header -->
+<div class="mb-8">
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Dar de Alta Nuevo Equipo (Alta Políglota)</h1>
+    <p class="text-sm text-gray-500 mt-1">
+        Complete el formulario. Los datos de ubicación se guardarán en SQL Server y las especificaciones técnicas en MongoDB.
+    </p>
+</div>
+
+<form method="POST" action="{{ url_for('equipo_nuevo') }}" class="space-y-6" id="hardwareForm">
+    <!-- Grid Principal -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- COLUMNA 1: SQL Server Data (Ubicación y Estado) -->
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+                <h3 class="text-lg font-bold text-gray-900 flex items-center pb-2 border-b border-gray-100">
+                    <i class="fa-solid fa-location-dot mr-2.5 text-brand-accent"></i> Registro y Ubicación (SQL)
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="id_equipo" class="block text-xs font-semibold text-gray-500 uppercase mb-1">ID Equipo <span class="text-red-500">*</span></label>
+                        <input type="text" name="id_equipo" id="id_equipo" required
+                            value="{{ form_data.id_equipo if form_data else '' }}"
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent transition-all bg-gray-50"
+                            placeholder="Ej: PC-LAB1-015">
+                    </div>
+
+                    <div>
+                        <label for="codigo_inventario" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Código de Inventario <span class="text-red-500">*</span></label>
+                        <input type="text" name="codigo_inventario" id="codigo_inventario" required
+                            value="{{ form_data.codigo_inventario if form_data else '' }}"
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent transition-all bg-gray-50"
+                            placeholder="Ej: INV-2026-045">
+                    </div>
+
+                    <div>
+                        <label for="id_aula" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Aula / Laboratorio <span class="text-red-500">*</span></label>
+                        <select name="id_aula" id="id_aula" required
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent transition-all bg-gray-50">
+                            <option value="" disabled selected>Seleccione el laboratorio...</option>
+                            {% for aula in aulas %}
+                            <option value="{{ aula.id_aula }}" {% if form_data and form_data.id_aula|string == aula.id_aula|string %}selected{% endif %}>{{ aula.nombre }} ({{ aula.edificio }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="numero_banco" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Banco / Mesa <span class="text-red-500">*</span></label>
+                            <input type="text" name="numero_banco" id="numero_banco" required
+                                value="{{ form_data.numero_banco if form_data else '' }}"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent transition-all bg-gray-50"
+                                placeholder="Ej: B05">
+                        </div>
+                        <div>
+                            <label for="estado" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Estado Inicial</label>
+                            <select name="estado" id="estado"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent transition-all bg-gray-50">
+                                <option value="activo" {% if form_data and form_data.estado == 'activo' %}selected{% endif %}>Activo</option>
+                                <option value="disponible" {% if form_data and form_data.estado == 'disponible' %}selected{% endif %}>Disponible</option>
+                                <option value="en_reparacion" {% if form_data and form_data.estado == 'en_reparacion' %}selected{% endif %}>En Reparación</option>
+                                <option value="asignado" {% if form_data and form_data.estado == 'asignado' %}selected{% endif %}>Asignado</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="id_responsable" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Responsable Técnico</label>
+                        <select name="id_responsable" id="id_responsable"
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent transition-all bg-gray-50">
+                            <option value="">Sin Asignar / Pendiente</option>
+                            {% for resp in responsables %}
+                            <option value="{{ resp.id_responsable }}" {% if form_data and form_data.id_responsable|string == resp.id_responsable|string %}selected{% endif %}>{{ resp.nombre }} {{ resp.apellido }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA 2-3: MongoDB Data (Especificaciones Técnicas) -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+                <h3 class="text-lg font-bold text-gray-900 flex items-center pb-2 border-b border-gray-100">
+                    <i class="fa-solid fa-microchip mr-2.5 text-brand-accent"></i> Componentes y Especificaciones (MongoDB)
+                </h3>
+
+                <!-- Specs Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Fabricante y Modelo -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="fabricante" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Fabricante</label>
+                            <input type="text" name="fabricante" id="fabricante"
+                                value="{{ form_data.fabricante if form_data else '' }}"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent transition-all bg-gray-50"
+                                placeholder="Ej: Dell, HP, Lenovo">
+                        </div>
+                        <div>
+                            <label for="modelo" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Modelo</label>
+                            <input type="text" name="modelo" id="modelo"
+                                value="{{ form_data.modelo if form_data else '' }}"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent transition-all bg-gray-50"
+                                placeholder="Ej: OptiPlex 5090">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="tipo" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Tipo de Hardware</label>
+                        <select name="tipo" id="tipo"
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent transition-all bg-gray-50">
+                            <option value="desktop" {% if form_data and form_data.tipo == 'desktop' %}selected{% endif %}>Desktop (Escritorio)</option>
+                            <option value="laptop" {% if form_data and form_data.tipo == 'laptop' %}selected{% endif %}>Laptop (Portátil)</option>
+                            <option value="workstation" {% if form_data and form_data.tipo == 'workstation' %}selected{% endif %}>Workstation (Servidor)</option>
+                        </select>
+                    </div>
+
+                    <!-- CPU -->
+                    <div class="md:col-span-2 p-4 bg-gray-50/50 rounded-xl border border-gray-100 space-y-3">
+                        <h4 class="text-xs font-bold text-gray-700 uppercase flex items-center">
+                            <i class="fa-solid fa-microchip mr-1.5 text-brand-accent"></i> Procesador (CPU)
+                        </h4>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div>
+                                <label for="cpu_marca" class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Marca</label>
+                                <input type="text" name="cpu_marca" id="cpu_marca"
+                                    value="{{ form_data.cpu_marca if form_data else '' }}"
+                                    class="block w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 bg-white"
+                                    placeholder="Intel, AMD">
+                            </div>
+                            <div>
+                                <label for="cpu_modelo" class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Modelo</label>
+                                <input type="text" name="cpu_modelo" id="cpu_modelo"
+                                    value="{{ form_data.cpu_modelo if form_data else '' }}"
+                                    class="block w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 bg-white"
+                                    placeholder="Core i5-10505">
+                            </div>
+                            <div>
+                                <label for="cpu_nucleos" class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Núcleos</label>
+                                <input type="number" name="cpu_nucleos" id="cpu_nucleos" min="1"
+                                    value="{{ form_data.cpu_nucleos if form_data else '' }}"
+                                    class="block w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 bg-white"
+                                    placeholder="6">
+                            </div>
+                            <div>
+                                <label for="cpu_frecuencia" class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Frecuencia (GHz)</label>
+                                <input type="number" name="cpu_frecuencia" id="cpu_frecuencia" step="0.1" min="0.1"
+                                    value="{{ form_data.cpu_frecuencia if form_data else '' }}"
+                                    class="block w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 bg-white"
+                                    placeholder="3.2">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RAM & SO -->
+                    <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-gray-50/50 rounded-xl border border-gray-100 space-y-3">
+                            <h4 class="text-xs font-bold text-gray-700 uppercase flex items-center">
+                                <i class="fa-solid fa-memory mr-1.5 text-brand-accent"></i> RAM
+                            </h4>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label for="ram_cantidad" class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">GB</label>
+                                    <input type="number" name="ram_cantidad" id="ram_cantidad" min="1"
+                                        value="{{ form_data.ram_cantidad if form_data else '' }}"
+                                        class="block w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-accent/50 bg-white"
+                                        placeholder="16">
+                                </div>
+                                <div>
+                                    <label for="ram_tipo" class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Tipo</label>
+                                    <input type="text" name="ram_tipo" id="ram_tipo"
+                                        value="{{ form_data.ram_tipo if form_data else '' }}"
+                                        class="block w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-accent/50 bg-white"
+                                        placeholder="DDR4">
+                                </div>
+                                <div>
+                                    <label for="ram_frecuencia" class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">MHz</label>
+                                    <input type="number" name="ram_frecuencia" id="ram_frecuencia" min="1"
+                                        value="{{ form_data.ram_frecuencia if form_data else '' }}"
+                                        class="block w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-accent/50 bg-white"
+                                        placeholder="2666">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-gray-50/50 rounded-xl border border-gray-100 space-y-3">
+                            <h4 class="text-xs font-bold text-gray-700 uppercase flex items-center">
+                                <i class="fa-solid fa-window-restore mr-1.5 text-brand-accent"></i> Sistema Operativo
+                            </h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label for="so_nombre" class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">SO</label>
+                                    <input type="text" name="so_nombre" id="so_nombre"
+                                        value="{{ form_data.so_nombre if form_data else '' }}"
+                                        class="block w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-accent/50 bg-white"
+                                        placeholder="Ubuntu">
+                                </div>
+                                <div>
+                                    <label for="so_version" class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Versión</label>
+                                    <input type="text" name="so_version" id="so_version"
+                                        value="{{ form_data.so_version if form_data else '' }}"
+                                        class="block w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-accent/50 bg-white"
+                                        placeholder="22.04 LTS">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Discos -->
+                <div class="p-4 bg-gray-50/50 rounded-xl border border-gray-100 space-y-3">
+                    <div class="flex justify-between items-center pb-1 border-b border-gray-200">
+                        <h4 class="text-xs font-bold text-gray-700 uppercase flex items-center">
+                            <i class="fa-solid fa-hard-drive mr-1.5 text-brand-accent"></i> Almacenamiento (Discos)
+                        </h4>
+                        <button type="button" id="btnAddDisco" class="px-2.5 py-1 bg-blue-50 text-brand-accent hover:bg-blue-100 font-semibold text-[10px] rounded-lg transition-colors flex items-center">
+                            <i class="fa-solid fa-plus mr-1"></i> Añadir
+                        </button>
+                    </div>
+
+                    <div id="discosContainer" class="space-y-3">
+                        <!-- Discos dinámicos inyectados por JS -->
+                    </div>
+
+                    <p id="noDiscosMessage" class="text-[11px] text-gray-400 italic">
+                        No hay discos agregados. Use el botón superior para añadir al menos uno.
+                    </p>
+                </div>
+
+                <!-- Periféricos -->
+                <div class="p-4 bg-gray-50/50 rounded-xl border border-gray-100 space-y-3">
+                    <h4 class="text-xs font-bold text-gray-700 uppercase flex items-center">
+                        <i class="fa-solid fa-keyboard mr-1.5 text-brand-accent"></i> Periféricos
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label for="periferico_monitor" class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Monitor</label>
+                            <input type="text" name="periferico_monitor" id="periferico_monitor"
+                                value="{{ form_data.periferico_monitor if form_data else '' }}"
+                                class="block w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-accent/50 bg-white"
+                                placeholder="Dell 22 SE2222H">
+                        </div>
+                        <div>
+                            <label for="periferico_teclado" class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Teclado</label>
+                            <input type="text" name="periferico_teclado" id="periferico_teclado"
+                                value="{{ form_data.periferico_teclado if form_data else '' }}"
+                                class="block w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-accent/50 bg-white"
+                                placeholder="Dell KB216">
+                        </div>
+                        <div>
+                            <label for="periferico_mouse" class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Mouse</label>
+                            <input type="text" name="periferico_mouse" id="periferico_mouse"
+                                value="{{ form_data.periferico_mouse if form_data else '' }}"
+                                class="block w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-accent/50 bg-white"
+                                placeholder="Dell MS116">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+        <a href="{{ url_for('equipos') }}" 
+           class="px-5 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg text-sm transition-colors">
+            Cancelar
+        </a>
+        <button type="submit" class="px-5 py-2.5 bg-brand-accent hover:bg-blue-700 text-white font-medium rounded-lg text-sm transition-colors shadow">
+            <i class="fa-solid fa-floppy-disk mr-2"></i> Crear Equipo
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const discosContainer = document.getElementById('discosContainer');
+    const btnAddDisco = document.getElementById('btnAddDisco');
+    const noDiscosMessage = document.getElementById('noDiscosMessage');
+    const form = document.getElementById('hardwareForm');
+
+    function checkEmptyMessage() {
+        const rowCount = discosContainer.querySelectorAll('.disco-row').length;
+        if (rowCount === 0) {
+            noDiscosMessage.classList.remove('hidden');
+        } else {
+            noDiscosMessage.classList.add('hidden');
+        }
+    }
+
+    function reindexDiscos() {
+        const rows = discosContainer.querySelectorAll('.disco-row');
+        rows.forEach((row, index) => {
+            const inputs = row.querySelectorAll('input');
+            inputs.forEach(input => {
+                const name = input.name;
+                if (name.includes('tipo')) {
+                    input.name = `disco_${index}_tipo`;
+                } else if (name.includes('interfaz')) {
+                    input.name = `disco_${index}_interfaz`;
+                } else if (name.includes('capacidad')) {
+                    input.name = `disco_${index}_capacidad`;
+                } else if (name.includes('marca')) {
+                    input.name = `disco_${index}_marca`;
+                }
+            });
+        });
+    }
+
+    btnAddDisco.addEventListener('click', () => {
+        const index = discosContainer.querySelectorAll('.disco-row').length;
+        
+        const rowHtml = `
+        <div class="disco-row grid grid-cols-1 sm:grid-cols-12 gap-3 p-3 bg-white rounded-xl border border-gray-200 relative group animate-fade-in">
+            <div class="sm:col-span-3">
+                <label class="block text-[10px] font-semibold text-gray-400 uppercase mb-0.5">Tipo</label>
+                <input type="text" name="disco_${index}_tipo" required
+                    class="block w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent"
+                    placeholder="SSD, HDD">
+            </div>
+            <div class="sm:col-span-3">
+                <label class="block text-[10px] font-semibold text-gray-400 uppercase mb-0.5">Interfaz</label>
+                <input type="text" name="disco_${index}_interfaz"
+                    class="block w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent"
+                    placeholder="SATA, NVMe, PCIe">
+            </div>
+            <div class="sm:col-span-3">
+                <label class="block text-[10px] font-semibold text-gray-400 uppercase mb-0.5">Capacidad (GB)</label>
+                <input type="number" name="disco_${index}_capacidad" min="1"
+                    class="block w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent"
+                    placeholder="256">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-[10px] font-semibold text-gray-400 uppercase mb-0.5">Marca</label>
+                <input type="text" name="disco_${index}_marca"
+                    class="block w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent"
+                    placeholder="Micron">
+            </div>
+            <div class="sm:col-span-1 flex items-end justify-center pb-1">
+                <button type="button" class="btnRemoveDisco text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg transition-colors" title="Quitar disco">
+                    <i class="fa-solid fa-trash-can text-sm"></i>
+                </button>
+            </div>
+        </div>`;
+
+        discosContainer.insertAdjacentHTML('beforeend', rowHtml);
+        checkEmptyMessage();
+        
+        const newRow = discosContainer.lastElementChild;
+        newRow.querySelector('.btnRemoveDisco').addEventListener('click', () => {
+            newRow.remove();
+            reindexDiscos();
+            checkEmptyMessage();
+        });
+    });
+
+    discosContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btnRemoveDisco');
+        if (btn) {
+            const row = btn.closest('.disco-row');
+            if (row) {
+                row.remove();
+                reindexDiscos();
+                checkEmptyMessage();
+            }
+        }
+    });
+
+    form.addEventListener('submit', () => {
+        reindexDiscos();
+    });
+
+    checkEmptyMessage();
+});
+</script>
+{% endblock %}

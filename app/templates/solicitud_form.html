@@ -1,0 +1,34 @@
+{% extends 'layout.html' %}
+{% block layout_content %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Solicitar Equipo</h1>
+            <p class="text-sm text-gray-500 mt-1">Complete el formulario para solicitar la asignación de un equipo.</p>
+        </div>
+        <a href="{{ url_for('asignaciones') }}" class="text-gray-500 hover:text-gray-700 transition-colors">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Volver
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <form method="POST" action="{{ url_for('solicitar_equipo') }}" class="space-y-5">
+            <div>
+                <label for="motivo" class="block text-sm font-medium text-gray-700 mb-1">Motivo de la solicitud *</label>
+                <textarea id="motivo" name="motivo" rows="4" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent transition-all text-sm" placeholder="Indique para qué necesita el equipo..."></textarea>
+            </div>
+            
+            <div>
+                <label for="fecha_necesidad" class="block text-sm font-medium text-gray-700 mb-1">Fecha a partir de la cual lo necesita *</label>
+                <input type="date" id="fecha_necesidad" name="fecha_necesidad" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent transition-all text-sm">
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex justify-end">
+                <button type="submit" class="px-5 py-2 bg-brand-accent text-white font-medium rounded-lg shadow hover:bg-blue-700 transition-colors">
+                    <i class="fa-solid fa-paper-plane mr-2"></i> Enviar Solicitud
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

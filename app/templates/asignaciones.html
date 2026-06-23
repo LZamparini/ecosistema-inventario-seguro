@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block layout_content %}
-<div class="mb-8 flex justify-between items-center">
+<div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
     <div>
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Asignaciones</h1>
         <p class="text-sm text-gray-500 mt-1">Gestión de equipos asignados a usuarios y solicitudes pendientes.</p>
@@ -16,22 +16,22 @@
 <!-- Tabs de navegación -->
 <div class="mb-6 border-b border-gray-200">
     <nav class="-mb-px flex space-x-8">
-        <a href="#" class="border-brand-accent text-brand-accent whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+        <a href="{{ url_for('asignaciones', tab='activas') }}" class="{% if tab == 'activas' %}border-brand-accent text-brand-accent{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
             Activas
         </a>
-        <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+        
+        {% if has_permission('aprobar_solicitudes') %}
+        <a href="{{ url_for('asignaciones', tab='pendientes') }}" class="{% if tab == 'pendientes' %}border-brand-accent text-brand-accent{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
             Solicitudes Pendientes
-            {% if has_permission('usuarios') %}
-            <!-- El Admin puede ver badge si hay solicitudes para aprobar -->
-            <span class="ml-2 bg-yellow-100 text-yellow-800 py-0.5 px-2 rounded-full text-xs font-bold">2</span>
+            {% if solicitudes|length > 0 %}
+            <span class="ml-2 bg-yellow-100 text-yellow-800 py-0.5 px-2 rounded-full text-xs font-bold">{{ solicitudes|length }}</span>
             {% endif %}
         </a>
-        <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-            Historial
-        </a>
+        {% endif %}
     </nav>
 </div>
 
+{% if tab == 'activas' %}
 <!-- Asignaciones Activas Table -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden w-full">
     <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-white">
@@ -39,12 +39,6 @@
             <i class="fa-solid fa-users-viewfinder text-gray-400 mr-2 text-sm"></i>
             Listado de Asignaciones
         </h3>
-        <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fa-solid fa-magnifying-glass text-gray-400 text-xs"></i>
-            </div>
-            <input type="text" class="block w-48 pl-9 pr-3 py-1.5 border border-gray-300 rounded-md text-xs placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent transition-colors bg-gray-50" placeholder="Buscar asignación...">
-        </div>
     </div>
     <div class="overflow-x-auto w-full">
         <table class="min-w-full divide-y divide-gray-200 table-hover">
@@ -60,40 +54,103 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200 text-sm">
-                <tr class="transition-colors">
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">EQ-000128</td>
-                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">Juan Pérez</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">Docente</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">01/05/2024</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">31/07/2024</td>
+                {% for asg in asignaciones %}
+                <tr class="transition-colors hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                        <a href="{{ url_for('equipo_detalle', id=asg.id_equipo) }}" class="text-brand-accent hover:text-blue-700 font-semibold transition-colors">
+                            {{ asg.id_equipo }}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-900">{{ asg.usuario_uid }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ asg.rol_assigned | capitalize }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ asg.fecha_desde_str }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ asg.fecha_hasta_str }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activa</span>
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activa
+                        </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <a href="#" class="text-brand-accent hover:text-blue-900 mr-3" title="Ver detalle"><i class="fa-solid fa-eye"></i></a>
-                        {% if has_permission('usuarios') %}
-                        <a href="#" class="text-red-500 hover:text-red-700" title="Revocar asignación"><i class="fa-solid fa-xmark"></i></a>
-                        {% endif %}
+                        <a href="{{ url_for('equipo_detalle', id=asg.id_equipo) }}" class="text-brand-accent hover:text-blue-900 mr-3" title="Ver detalle">
+                            <i class="fa-solid fa-eye text-sm"></i>
+                        </a>
                     </td>
                 </tr>
-                <tr class="transition-colors">
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">EQ-000127</td>
-                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">María Gómez</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">Alumno</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">15/04/2024</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">15/07/2024</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activa</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <a href="#" class="text-brand-accent hover:text-blue-900 mr-3" title="Ver detalle"><i class="fa-solid fa-eye"></i></a>
-                        {% if has_permission('usuarios') %}
-                        <a href="#" class="text-red-500 hover:text-red-700" title="Revocar asignación"><i class="fa-solid fa-xmark"></i></a>
-                        {% endif %}
-                    </td>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="px-6 py-8 text-center text-gray-400 italic">No hay asignaciones activas registradas.</td>
                 </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+{% elif tab == 'pendientes' and has_permission('aprobar_solicitudes') %}
+<!-- Solicitudes Pendientes Table -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden w-full">
+    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-white">
+        <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+            <i class="fa-solid fa-clock-rotate-left text-gray-400 mr-2 text-sm"></i>
+            Solicitudes Pendientes
+        </h3>
+    </div>
+    <div class="overflow-x-auto w-full">
+        <table class="min-w-full divide-y divide-gray-200 table-hover">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Motivo</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Necesario desde</th>
+                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                {% for sol in solicitudes %}
+                <tr class="transition-colors hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ sol.fecha_solicitud.strftime('%d/%m/%Y') }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ sol.nombre_completo }} ({{ sol.rol }})</td>
+                    <td class="px-6 py-4 text-gray-500 max-w-xs truncate" title="{{ sol.motivo }}">{{ sol.motivo }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ sol.fecha_necesidad }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        
+                        <div class="flex flex-col space-y-2 w-48 mx-auto">
+                            <!-- Formulario para aprobar -->
+                            <form method="POST" action="{{ url_for('aprobar_solicitud', id_solicitud=sol._id) }}" class="flex flex-col space-y-2 bg-gray-50 p-2 rounded border border-gray-200">
+                                <p class="text-xs font-semibold text-gray-700 text-left">Aprobar y Asignar</p>
+                                <select name="id_equipo" required class="w-full text-xs border border-gray-300 rounded p-1">
+                                    <option value="">-- Equipo --</option>
+                                    {% if not equipos_disponibles %}
+                                    <option value="" disabled>No hay equipos activos</option>
+                                    {% endif %}
+                                    {% for eq in equipos_disponibles %}
+                                    <option value="{{ eq.id_equipo }}">{{ eq.id_equipo }} ({{ eq.codigo_inventario }})</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="date" name="fecha_hasta" required class="w-full text-xs border border-gray-300 rounded p-1" title="Fecha Hasta">
+                                <button type="submit" class="w-full py-1 bg-green-500 text-white text-xs font-bold rounded hover:bg-green-600 transition-colors">
+                                    <i class="fa-solid fa-check mr-1"></i> Confirmar
+                                </button>
+                            </form>
+
+                            <!-- Formulario para rechazar -->
+                            <form method="POST" action="{{ url_for('rechazar_solicitud', id_solicitud=sol._id) }}">
+                                <button type="submit" class="w-full py-1 bg-white text-red-600 border border-red-200 text-xs font-bold rounded hover:bg-red-50 transition-colors" onclick="return confirm('¿Está seguro de rechazar esta solicitud?');">
+                                    <i class="fa-solid fa-xmark mr-1"></i> Rechazar
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-6 py-8 text-center text-gray-400 italic">No hay solicitudes pendientes.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}

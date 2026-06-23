@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: inventario-seguro
+  labels:
+    proyecto: egi-itu
+    equipo: inventario

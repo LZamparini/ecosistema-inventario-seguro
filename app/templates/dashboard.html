@@ -1,7 +1,6 @@
 {% extends 'layout.html' %}
 
 {% block layout_content %}
-<!-- Header section -->
 <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
     <div>
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
@@ -15,10 +14,12 @@
 </div>
 
 <!-- KPIs -->
-<div class="grid grid-cols-1 sm:grid-cols-2 {% if has_permission('mantenimiento') %}lg:grid-cols-4{% else %}lg:grid-cols-2{% endif %} gap-4 sm:gap-6">
+<div
+    class="grid grid-cols-1 sm:grid-cols-2 {% if has_permission('mantenimiento') %}lg:grid-cols-4{% else %}lg:grid-cols-2{% endif %} gap-4 sm:gap-6">
     {% if has_permission('equipos') %}
     <!-- Card 1: Total de Equipos -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-start space-x-4 hover:shadow-md transition-shadow">
+    <div
+        class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-start space-x-4 hover:shadow-md transition-shadow">
         <div class="p-3 bg-brand-accent text-white rounded-lg shadow-sm">
             <i class="fa-solid fa-desktop text-xl"></i>
         </div>
@@ -35,7 +36,8 @@
 
     {% if has_permission('aulas') %}
     <!-- Card 2: Laboratorios -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-start space-x-4 hover:shadow-md transition-shadow">
+    <div
+        class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-start space-x-4 hover:shadow-md transition-shadow">
         <div class="p-3 bg-green-500 text-white rounded-lg shadow-sm">
             <i class="fa-solid fa-location-dot text-xl w-5 text-center"></i>
         </div>
@@ -51,7 +53,8 @@
     {% endif %}
 
     <!-- Card 3: Equipos Asignados (visible para todos) -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-start space-x-4 hover:shadow-md transition-shadow">
+    <div
+        class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-start space-x-4 hover:shadow-md transition-shadow">
         <div class="p-3 bg-purple-500 text-white rounded-lg shadow-sm">
             <i class="fa-solid fa-users text-xl w-5 text-center"></i>
         </div>
@@ -67,7 +70,8 @@
 
     {% if has_permission('mantenimiento') %}
     <!-- Card 4: Mantenimientos -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-start space-x-4 hover:shadow-md transition-shadow">
+    <div
+        class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-start space-x-4 hover:shadow-md transition-shadow">
         <div class="p-3 bg-yellow-500 text-white rounded-lg shadow-sm">
             <i class="fa-solid fa-wrench text-xl w-5 text-center"></i>
         </div>
@@ -95,37 +99,55 @@
                     <i class="fa-solid fa-desktop text-gray-400 mr-2 text-sm"></i>
                     Equipos recientes
                 </h3>
-                <a href="{{ url_for('equipos') }}" class="text-sm font-medium text-brand-accent hover:text-blue-700">Ver todos</a>
+                <a href="{{ url_for('equipos') }}" class="text-sm font-medium text-brand-accent hover:text-blue-700">Ver
+                    todos</a>
             </div>
             <div class="overflow-x-auto w-full">
                 <table class="min-w-full divide-y divide-gray-200 table-hover">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Equipo</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Ubicación</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Responsable</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">Último Mant.</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                COD-INVENTARIO</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                ID Equipo</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                                Ubicación</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                                Responsable</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Estado</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
+                                Último Mant.</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200 text-sm">
                         {% for eq in stats.equipos_recientes %}
                         <tr class="transition-colors hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ eq.codigo_inventario }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ eq.id_equipo }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                                <a href="{{ url_for('equipo_detalle', id=eq.id_equipo) }}"
+                                    class="text-brand-accent hover:text-blue-700 font-semibold transition-colors">
+                                    {{ eq.id_equipo }}
+                                </a>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden md:table-cell">
                                 {% if eq.aula_nombre %}
-                                    {{ eq.aula_nombre }} - Banco {{ eq.numero_banco }}
+                                {{ eq.aula_nombre }} - Banco {{ eq.numero_banco }}
                                 {% else %}
-                                    -
+                                -
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden lg:table-cell">
                                 {% if eq.responsable_nombre %}
-                                    {{ eq.responsable_nombre }}
+                                {{ eq.responsable_nombre }}
                                 {% else %}
-                                    <span class="text-gray-400 italic">Sin asignar</span>
+                                <span class="text-gray-400 italic">Sin asignar</span>
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
@@ -142,11 +164,13 @@
                                     {{ eq.estado | replace('_', ' ') | capitalize }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden xl:table-cell">{{ eq.ultimo_mant_str }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden xl:table-cell">{{
+                                eq.ultimo_mant_str }}</td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="6" class="px-6 py-8 text-center text-gray-400 italic">No se encontraron equipos registrados.</td>
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-400 italic">No se encontraron equipos
+                                registrados.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -162,18 +186,31 @@
                     <i class="fa-solid fa-users-viewfinder text-gray-400 mr-2 text-sm"></i>
                     Asignaciones activas
                 </h3>
-                <a href="{{ url_for('asignaciones') }}" class="text-sm font-medium text-brand-accent hover:text-blue-700">Ver todas</a>
+                <a href="{{ url_for('asignaciones') }}"
+                    class="text-sm font-medium text-brand-accent hover:text-blue-700">Ver todas</a>
             </div>
             <div class="overflow-x-auto w-full">
                 <table class="min-w-full divide-y divide-gray-200 table-hover">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Equipo</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Rol</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Fecha desde</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Fecha hasta</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Equipo</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Usuario</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                                Rol</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                                Fecha desde</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                                Fecha hasta</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Estado</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200 text-sm">
@@ -184,7 +221,9 @@
                             <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden lg:table-cell">01/05/2024</td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden lg:table-cell">31/07/2024</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activa</span>
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span
+                                        class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activa</span>
                             </td>
                         </tr>
                         <tr class="transition-colors hover:bg-gray-50">
@@ -194,7 +233,9 @@
                             <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden lg:table-cell">15/04/2024</td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden lg:table-cell">15/07/2024</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activa</span>
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span
+                                        class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activa</span>
                             </td>
                         </tr>
                         <tr class="transition-colors hover:bg-gray-50">
@@ -204,7 +245,9 @@
                             <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden lg:table-cell">20/04/2024</td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-500 hidden lg:table-cell">20/06/2024</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activa</span>
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><span
+                                        class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 mt-2"></span>Activa</span>
                             </td>
                         </tr>
                     </tbody>
@@ -229,7 +272,9 @@
             <!-- Simulated Chart -->
             <div class="flex flex-col items-center mb-6 relative">
                 <div class="w-48 h-48 rounded-full border-[20px] border-gray-100 relative shadow-inner">
-                    <div class="absolute inset-[-20px] rounded-full" style="background: {{ stats.conic_gradient }}; clip-path: circle(50%); -webkit-mask: radial-gradient(transparent 65%, black 65%); mask: radial-gradient(transparent 65%, black 65%);"></div>
+                    <div class="absolute inset-[-20px] rounded-full"
+                        style="background: {{ stats.conic_gradient }}; clip-path: circle(50%); -webkit-mask: radial-gradient(transparent 65%, black 65%); mask: radial-gradient(transparent 65%, black 65%);">
+                    </div>
                     <div class="absolute inset-0 flex flex-col items-center justify-center">
                         <span class="text-2xl font-bold text-gray-800">{{ stats.total_equipos }}</span>
                         <span class="text-xs text-gray-500">Total</span>
@@ -262,7 +307,6 @@
                     <i class="fa-solid fa-wrench text-gray-400 mr-2 text-sm"></i>
                     Próximos mantenimientos
                 </h3>
-                <a href="{{ url_for('mantenimiento') }}" class="text-sm font-medium text-brand-accent hover:text-blue-700">Ver todos</a>
             </div>
 
             <div class="space-y-4">
@@ -272,8 +316,11 @@
                         <i class="fa-regular fa-calendar text-lg"></i>
                     </div>
                     <div class="flex-1">
-                        <h4 class="font-medium text-gray-900 text-sm">{{ mant.id_equipo }}</h4>
-                        <p class="text-xs text-gray-500 mt-0.5">{{ mant.aula_nombre }} - Banco {{ mant.numero_banco }}</p>
+                        <h4 class="font-semibold text-brand-accent hover:text-blue-700 text-sm transition-colors">
+                            <a href="{{ url_for('equipo_detalle', id=mant.id_equipo) }}">{{ mant.id_equipo }}</a>
+                        </h4>
+                        <p class="text-xs text-gray-500 mt-0.5">{{ mant.aula_nombre }} - Banco {{ mant.numero_banco }}
+                        </p>
                     </div>
                     <div class="text-right">
                         <p class="text-sm font-medium text-gray-800">{{ mant.proximo_mant }}</p>
