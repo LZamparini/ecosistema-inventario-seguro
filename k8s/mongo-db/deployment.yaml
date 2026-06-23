@@ -24,13 +24,13 @@ spec:
             - name: MONGO_INITDB_ROOT_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: mongo-secret
-                  key: MONGO_ROOT_USER
+                  name: app-secret
+                  key: MONGO_USER
             - name: MONGO_INITDB_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mongo-secret
-                  key: MONGO_ROOT_PASSWORD
+                  name: app-secret
+                  key: MONGO_PASSWORD
             - name: MONGO_INITDB_DATABASE
               value: inventario
           volumeMounts:
