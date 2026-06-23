@@ -7,9 +7,9 @@
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Componentes (MongoDB)</h1>
         <p class="text-sm text-gray-500 mt-1">Gestión de hardware — Inventario de componentes internos de cada equipo</p>
     </div>
-    {% if has_permission('componentes') and current_user.rol in ['admin', 'tecnico'] %}
-    <a href="{{ url_for('componente_nuevo') }}" class="px-5 py-2.5 bg-brand-accent text-white font-medium rounded-lg shadow hover:bg-blue-700 transition-all flex items-center group">
-        <i class="fa-solid fa-plus mr-2 group-hover:rotate-90 transition-transform duration-300"></i> Agregar Equipo
+    {% if current_user.rol == 'admin' %}
+    <a href="{{ url_for('equipo_nuevo') }}" class="px-5 py-2.5 bg-brand-accent text-white font-medium rounded-lg shadow hover:bg-blue-700 transition-all flex items-center group">
+        <i class="fa-solid fa-plus mr-2 group-hover:rotate-90 transition-transform duration-300"></i> Agregar Equipo (Alta Políglota)
     </a>
     {% endif %}
 </div>

@@ -5,7 +5,9 @@ from db import (
     test_db_connection, get_db_connection,
     test_mongo_connection, get_all_hardware, get_hardware_by_id,
     insert_hardware, update_hardware, delete_hardware,
-    get_equipo_sql_details, get_active_assignments
+    get_equipo_sql_details, get_active_assignments,
+    get_aulas, get_responsables, insert_equipo_sql,
+    get_all_mantenimientos, insert_mantenimiento_sql
 )
 import datetime
 
@@ -245,37 +247,50 @@ def equipo_detalle(id):
 @login_required
 @role_required('equipo_nuevo')
 def equipo_nuevo():
-    return "Vista para crear un nuevo equipo (En desarrollo)"
+    """Formulario unificado para agregar un nuevo equipo a SQL Server y MongoDB."""
+    aulas_list = get_aulas()
+    responsables_list = get_responsables()
 
-
-@app.route('/equipo/<id>/editar', methods=['GET', 'POST'])
-@login_required
-@role_required('equipo_editar')
-def equipo_editar(id):
-    return f"Vista para editar el equipo {id} (En desarrollo)"
-
-
-@app.route('/equipo/<id>/eliminar', methods=['POST'])
-@login_required
-@role_required('equipo_eliminar')
-def equipo_eliminar(id):
-    return f"Vista/Ruta para eliminar el equipo {id} (En desarrollo)"
-
-
-@app.route('/solicitar-equipo', methods=['GET', 'POST'])
-@login_required
-@role_required('solicitar_equipo')
-def solicitar_equipo():
     if request.method == 'POST':
-        tipo = request.form.get('tipo')
-        justificacion = request.form.get('justificacion')
-        fecha_desde = request.form.get('fecha_desde')
-        fecha_hasta = request.form.get('fecha_hasta')
-        # Por ahora solo simulamos que la solicitud fue enviada exitosamente
-        flash('Solicitud de equipo enviada exitosamente. Estado: Pendiente.', 'success')
-        return redirect(url_for('asignaciones'))
-    
-    return render_template('solicitar_equipo.html')
+        # 1. Parsear datos para SQL Server
+        id_equipo = request.form.get('id_equipo', '').strip()
+        codigo_inventario = request.form.get('codigo_inventario', '').strip()
+        id_aula = request.form.get('id_aula')
+        numero_banco = request.form.get('numero_banco', '').strip()
+        estado = request.form.get('estado', 'activo').strip()
+        id_responsable = request.form.get('id_responsable')
+        
+        if not id_equipo or not codigo_inventario or not id_aula or not numero_banco:
+            flash('Los campos ID Equipo, Código Inventario, Aula y Banco son obligatorios.', 'error')
+            return render_template('equipo_form.html', aulas=aulas_list, responsables=responsables_list, form_data=request.form)
+            
+        sql_data = {
+            'id_equipo': id_equipo,
+            'codigo_inventario': codigo_inventario,
+            'id_aula': id_aula,
+            'numero_banco': numero_banco,
+            'estado': estado,
+            'id_responsable': id_responsable if id_responsable else None,
+            'fecha_ingreso': datetime.date.today()
+        }
+
+        # 2. Parsear datos para MongoDB
+        mongo_data = _parse_hardware_form(request.form)
+        
+        # 3. Guardar en SQL Server
+        if not insert_equipo_sql(sql_data):
+            flash('Error al guardar el equipo en SQL Server. Es posible que el ID o Código de Inventario ya existan.', 'error')
+            return render_template('equipo_form.html', aulas=aulas_list, responsables=responsables_list, form_data=request.form)
+
+        # 4. Guardar en MongoDB
+        if not insert_hardware(mongo_data):
+            flash('Equipo guardado en SQL Server, pero falló el registro de componentes en MongoDB.', 'warning')
+            return redirect(url_for('equipos'))
+
+        flash(f'Equipo "{id_equipo}" creado exitosamente en ambas bases de datos.', 'success')
+        return redirect(url_for('equipos'))
+
+    return render_template('equipo_form.html', aulas=aulas_list, responsables=responsables_list, form_data=None)
 
 
 @app.route('/asignaciones')
@@ -434,7 +449,69 @@ def _parse_hardware_form(form):
 @login_required
 @role_required('mantenimiento')
 def mantenimiento():
-    return render_template('stub.html', title='Mantenimiento', message='Programación y registro de mantenimientos (En desarrollo).')
+    """Lista todos los mantenimientos desde SQL Server."""
+    mants = get_all_mantenimientos()
+    return render_template('mantenimiento_list.html', mantenimientos=mants)
+
+
+@app.route('/mantenimiento/nuevo', methods=['GET', 'POST'])
+@login_required
+@role_required('mantenimiento')
+def mantenimiento_nuevo():
+    """Formulario para registrar un nuevo mantenimiento en SQL Server."""
+    # Obtener lista de equipos de SQL Server para el select
+    conn = get_db_connection()
+    equipos_list = []
+    if conn:
+        try:
+            with conn.cursor(as_dict=True) as cursor:
+                cursor.execute("SELECT id_equipo, codigo_inventario FROM equipos ORDER BY id_equipo")
+                equipos_list = cursor.fetchall()
+        except Exception as e:
+            print(f"[SQL ERROR] Error fetching equipos for maintenance select: {e}")
+        finally:
+            conn.close()
+
+    today_str = datetime.date.today().strftime('%Y-%m-%d')
+
+    if request.method == 'POST':
+        id_equipo = request.form.get('id_equipo')
+        tipo = request.form.get('tipo')
+        descripcion = request.form.get('descripcion', '').strip()
+        tecnico = request.form.get('tecnico', '').strip()
+        fecha_mant_raw = request.form.get('fecha_mant')
+        proximo_mant_raw = request.form.get('proximo_mant')
+
+        if not id_equipo or not tipo or not fecha_mant_raw or not tecnico:
+            flash('Los campos Equipo, Tipo, Técnico y Fecha son obligatorios.', 'error')
+            return render_template('mantenimiento_form.html', equipos=equipos_list, form_data=request.form, today_str=today_str)
+
+        try:
+            fecha_mant = datetime.datetime.strptime(fecha_mant_raw, '%Y-%m-%d').date()
+            proximo_mant = datetime.datetime.strptime(proximo_mant_raw, '%Y-%m-%d').date() if proximo_mant_raw else None
+        except ValueError:
+            flash('Formato de fecha inválido. Use AAAA-MM-DD.', 'error')
+            return render_template('mantenimiento_form.html', equipos=equipos_list, form_data=request.form, today_str=today_str)
+
+        mant_data = {
+            'id_equipo': id_equipo,
+            'fecha_mant': fecha_mant,
+            'tipo': tipo,
+            'descripcion': descripcion,
+            'tecnico': tecnico,
+            'proximo_mant': proximo_mant
+        }
+
+        if insert_mantenimiento_sql(mant_data):
+            flash(f'Mantenimiento registrado con éxito. El equipo "{id_equipo}" ha sido marcado "En reparación".', 'success')
+            return redirect(url_for('mantenimiento'))
+        else:
+            flash('Error al registrar el mantenimiento en SQL Server.', 'error')
+            return render_template('mantenimiento_form.html', equipos=equipos_list, form_data=request.form, today_str=today_str)
+
+    # Si se pasa un id_equipo por query string, pre-seleccionarlo
+    preselected_id = request.args.get('id_equipo')
+    return render_template('mantenimiento_form.html', equipos=equipos_list, preselected_id=preselected_id, form_data=None, today_str=today_str)
 
 @app.route('/aulas')
 @login_required

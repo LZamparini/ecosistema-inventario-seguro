@@ -51,34 +51,24 @@ ROLE_PERMISSIONS = {
         'equipos', 'equipo_detalle', 'equipo_nuevo', 'equipo_editar', 'equipo_eliminar',
         'componentes',
         'mantenimiento',
-        'aulas',
-        'asignaciones', 'solicitar_equipo',
-        'responsables',
-        'reportes',
-        'usuarios',
-        'configuracion',
+        'asignaciones',
     ],
     'tecnico': [
         'dashboard',
-        'equipos', 'equipo_detalle', 'equipo_nuevo', 'equipo_editar',
+        'equipos', 'equipo_detalle',
         'componentes',
         'mantenimiento',
-        'aulas',
-        'asignaciones', 'solicitar_equipo',
-        'responsables',
-        'reportes',
+        'asignaciones',
     ],
     'docente': [
         'dashboard',
         'equipos', 'equipo_detalle',
-        'aulas',
-        'asignaciones', 'solicitar_equipo',
-        'reportes',
+        'asignaciones',
     ],
     'alumno': [
         'dashboard',
         'equipo_detalle',
-        'asignaciones', 'solicitar_equipo',
+        'asignaciones',
     ],
 }
 
@@ -105,16 +95,16 @@ SIDEBAR_MENU = [
         ]
     },
     {
-        'section': 'Inventario',
+        'section': 'Inventario y Soporte',
         'items': [
             {'label': 'Componentes (MongoDB)', 'icon': 'fa-solid fa-microchip', 'href': 'componentes', 'permission': 'componentes', 'active_id': 'componentes'},
+            {'label': 'Mantenimiento',         'icon': 'fa-solid fa-wrench',    'href': 'mantenimiento', 'permission': 'mantenimiento', 'active_id': 'mantenimiento'},
         ]
     },
     {
         'section': 'Ubicación y Asignación',
         'items': [
             {'label': 'Asignaciones',          'icon': 'fa-solid fa-users-viewfinder', 'href': 'asignaciones', 'permission': 'asignaciones',  'active_id': 'asignaciones'},
-            {'label': 'Solicitar Equipo',      'icon': 'fa-solid fa-hand-holding-hand', 'href': 'solicitar_equipo', 'permission': 'solicitar_equipo', 'active_id': 'solicitar_equipo'},
         ]
     },
 ]
