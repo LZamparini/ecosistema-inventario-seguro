@@ -111,7 +111,10 @@ else
 fi
 # ─── 6. Flask App ────────────────────────────────────────────────────────────
 echo ""
-echo "[6/7] Desplegando aplicación Flask..."
+echo "[6/7] Reconstruyendo imagen docker para la aplicación..."
+minikube image build -t inventario-web:latest "$REPO_DIR/app"
+
+echo "Desplegando aplicación Flask..."
 kubectl apply -f "$REPO_DIR/k8s/frontend/deployment.yaml" -n $NAMESPACE
 echo "Esperando que Flask esté listo..."
 
